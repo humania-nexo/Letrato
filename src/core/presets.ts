@@ -36,6 +36,20 @@ export const PRESET_STORIES: PresetStory[] = [
     author: 'Canción Popular del Manuscrito',
     summary: 'El origen lírico de la palabra Letrato en la memoria de Don Samuel.',
     text: `En mi billetera cargo tu letratito, gastado de tanto mirarlo al caer la tarde. No es una foto de vidrio ni un papel pulido de estudio; son tus palabras dobladas en cuatro partes, las líneas que me escribiste antes de partir. Cada letra guarda la sombra de tu risa y cada espacio en blanco es la promesa de que volveremos a encontrarnos donde la memoria no se borra.`
+  },
+  {
+    id: 'frase-corta',
+    title: 'Frase Corta (Test de Bucle Cíclico)',
+    author: 'David (Anigami Agadni)',
+    summary: 'Demostración de replicación automática de un fragmento breve hasta esculpir la imagen.',
+    text: `DE LEJOS UN ROSTRO, DE CERCA UNA HISTORIA. `
+  },
+  {
+    id: 'lorem-ipsum',
+    title: 'Lorem Ipsum (Texto Aleatorio Tipográfico)',
+    author: 'Estándar Tipográfico',
+    summary: 'Texto de prueba para calibración gráfica pura y ritmo de manchas.',
+    text: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`
   }
 ];
 

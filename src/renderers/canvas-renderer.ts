@@ -87,7 +87,35 @@ export class CanvasRenderer {
     // Color base de tinta
     const inkBase = isDarkTheme ? '255, 255, 255' : '17, 17, 17';
 
-    // Configuración tipográfica
+    // RENDERIZADO PARA MODO CONTORNO / CALIGRAMA
+    if (config.mode === 'contorno' && matrix.contourGlyphs) {
+      targetCtx.textAlign = 'center';
+      targetCtx.textBaseline = 'middle';
+
+      for (const g of matrix.contourGlyphs) {
+        if (clipBounds) {
+          if (
+            g.x < clipBounds.x - 20 ||
+            g.x > clipBounds.x + clipBounds.width + 20 ||
+            g.y < clipBounds.y - 20 ||
+            g.y > clipBounds.y + clipBounds.height + 20
+          ) {
+            continue;
+          }
+        }
+
+        targetCtx.save();
+        targetCtx.translate(g.x, g.y);
+        targetCtx.rotate(g.angle);
+        targetCtx.font = `${g.fontSize}px ${config.fontFamily}, monospace`;
+        targetCtx.fillStyle = `rgba(${inkBase}, ${g.opacity})`;
+        targetCtx.fillText(g.char, 0, 0);
+        targetCtx.restore();
+      }
+      return;
+    }
+
+    // Configuración tipográfica para modos matriciales
     const fontSize = grid.cellHeight * 0.95;
     targetCtx.font = `${fontSize}px ${config.fontFamily}, monospace`;
     targetCtx.textAlign = 'center';

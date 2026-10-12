@@ -38,6 +38,17 @@ export class ImageProcessor {
   }
 
   /**
+   * Obtiene la estructura ImageData para procesamiento a resolución completa.
+   */
+  public getImageData(image: HTMLImageElement, width: number, height: number): ImageData {
+    this.canvas.width = width;
+    this.canvas.height = height;
+    this.ctx.clearRect(0, 0, width, height);
+    this.ctx.drawImage(image, 0, 0, width, height);
+    return this.ctx.getImageData(0, 0, width, height);
+  }
+
+  /**
    * Extrae la matriz de luminancias por celda de acuerdo a la cuadrícula y configuración.
    * Retorna un Float32Array de longitud (rows * columns) con valores normalizados entre 0 (negro) y 1 (blanco).
    */

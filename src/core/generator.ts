@@ -4,17 +4,44 @@ import type {
   LetratoConfig,
   ProcessedMatrix
 } from './types';
+import { ContourTracer } from './contour-tracer';
 
 export class LetratoGenerator {
+  private contourTracer: ContourTracer;
+
+  constructor() {
+    this.contourTracer = new ContourTracer();
+  }
+
   /**
-   * Genera la matriz bidimensional de celdas procesadas a partir de la luminancia y la configuración.
+   * Genera la matriz bidimensional de celdas procesadas o el trazado de contornos tipográficos.
    */
   public generateMatrix(
     grid: GridDimensions,
     luminanceMatrix: Float32Array,
     edgeMatrix: Float32Array,
-    config: LetratoConfig
+    config: LetratoConfig,
+    rawImageData?: ImageData
   ): ProcessedMatrix {
+    // Si el modo es Contorno / Caligrama y disponemos de la imagen en bruto
+    if (config.mode === 'contorno' && rawImageData) {
+      const { paths, glyphs } = this.contourTracer.traceAndPlaceGlyphs(
+        grid.totalWidth,
+        grid.totalHeight,
+        rawImageData,
+        config
+      );
+
+      return {
+        grid,
+        cells: [],
+        luminanceMap: luminanceMatrix,
+        config,
+        contourPaths: paths,
+        contourGlyphs: glyphs
+      };
+    }
+
     const { columns, rows } = grid;
     const cells: CellRenderData[][] = [];
 
@@ -42,8 +69,6 @@ export class LetratoGenerator {
         switch (config.mode) {
           case 'tosco': {
             // Mapeo ASCII clásico de rampa de densidad
-            // lum = 0 -> más oscuro (último carácter de la rampa)
-            // lum = 1 -> más claro (primer carácter de la rampa)
             const darkness = 1.0 - lum;
             const rampIndex = Math.min(
               rampLength - 1,
@@ -60,10 +85,9 @@ export class LetratoGenerator {
             textPointer++;
 
             // El tono modula la opacidad de la tinta (en papel blanco, oscuro = mayor opacidad)
-            // Invertimos lum porque lum=0 es sombra y lum=1 es luz
             const darkness = Math.min(1.0, (1.0 - lum) + edge * 0.5);
 
-            // Piso de legibilidad: garantiza que en zonas claras la letra no desaparezca por completo
+            // Piso de legibilidad
             const minFloor = config.minLegibility;
             opacity = minFloor + (1.0 - minFloor) * darkness;
             opacity = Math.max(minFloor, Math.min(1.0, opacity));
@@ -78,20 +102,16 @@ export class LetratoGenerator {
             const darkness = Math.min(1.0, (1.0 - lum) + edge * 0.4);
 
             if (darkness < 0.15) {
-              // Zona de luz absoluta: espacio en blanco
               char = ' ';
               opacity = 0;
               overprintCount = 0;
             } else if (darkness < 0.45) {
-              // Zona clara: 1 pasada ligera
               opacity = 0.55;
               overprintCount = 0;
             } else if (darkness < 0.75) {
-              // Zona media: 1 pasada plena
               opacity = 0.95;
               overprintCount = 1;
             } else {
-              // Sombra profunda: sobreimpresión mecánica doble o triple
               opacity = 1.0;
               overprintCount = Math.min(3, config.overprintStrength || 2);
             }

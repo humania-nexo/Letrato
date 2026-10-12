@@ -1,8 +1,30 @@
-export type LetratoMode = 'tosco' | 'letrato' | 'typewriter';
+export type LetratoMode = 'tosco' | 'letrato' | 'typewriter' | 'contorno';
 
 export type PaperTheme = 'white' | 'sepia' | 'dark' | 'cream';
 
 export type ExportResolution = '1x' | '2x' | '4x';
+
+export interface Point2D {
+  x: number;
+  y: number;
+}
+
+export interface ContourPath {
+  id: string;
+  points: Point2D[];
+  length: number;
+  darkness: number; // 0 (claro) a 1 (oscuro)
+  isHatching?: boolean;
+}
+
+export interface PlacedGlyph {
+  char: string;
+  x: number;
+  y: number;
+  angle: number; // Radianes
+  opacity: number;
+  fontSize: number;
+}
 
 export interface LetratoConfig {
   mode: LetratoMode;
@@ -21,6 +43,12 @@ export interface LetratoConfig {
   overprintStrength: number; // Para modo Máquina de escribir (1 a 4 pasadas)
   caseTransform: 'original' | 'uppercase' | 'lowercase';
   ignoreWhitespace: boolean; // Si true, solo usa letras visibles en el flujo
+  // Parámetros específicos para Modo Contorno / Caligrama
+  contourThreshold: number; // 10 a 80 (sensibilidad de detección de bordes, default 35)
+  contourMinLength: number; // 15 a 150 px (elimina trazos ruidosos, default 30)
+  contourFontSize: number; // 7 a 20 px (tamaño de letra sobre la curva, default 11)
+  contourDensity: number; // 1 a 5 (densidad de muestreo de bordes, default 2)
+  contourHatching: boolean; // Si true, añade líneas de texto en zonas de sombra profunda
 }
 
 export interface GridDimensions {
@@ -44,9 +72,12 @@ export interface CellRenderData {
 
 export interface ProcessedMatrix {
   grid: GridDimensions;
-  cells: CellRenderData[][]; // [row][col]
+  cells: CellRenderData[][]; // [row][col] (para modos matriciales)
   luminanceMap: Float32Array; // Array lineal para cálculos rápidos
   config: LetratoConfig;
+  // Para Modo Contorno / Caligrama
+  contourPaths?: ContourPath[];
+  contourGlyphs?: PlacedGlyph[];
 }
 
 export interface PresetStory {

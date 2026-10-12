@@ -19,39 +19,54 @@ export class SvgRenderer {
         : '#0f1115';
 
     const inkColor = isDark ? '#ffffff' : '#111111';
-    const fontSize = (cellHeight * 0.95).toFixed(2);
-    const halfCellW = (cellWidth / 2);
-    const halfCellH = (cellHeight / 2);
-
+    const defaultFontSize = (cellHeight * 0.95).toFixed(2);
     let textElements = '';
 
-    for (let r = 0; r < rows; r++) {
-      const row = cells[r];
-      for (let c = 0; c < columns; c++) {
-        const cell = row[c];
-        if (!cell.char || cell.char === ' ' || cell.opacity <= 0.01) {
-          continue;
-        }
+    // RENDERIZADO VECTORIAL PARA MODO CONTORNO
+    if (config.mode === 'contorno' && matrix.contourGlyphs) {
+      for (const g of matrix.contourGlyphs) {
+        const deg = ((g.angle * 180) / Math.PI).toFixed(1);
+        const posX = g.x.toFixed(2);
+        const posY = g.y.toFixed(2);
+        const op = g.opacity.toFixed(3);
+        const escapedChar = this.escapeXml(g.char);
 
-        const posX = (cell.x + halfCellW).toFixed(2);
-        const posY = (cell.y + halfCellH).toFixed(2);
-        const op = cell.opacity.toFixed(3);
-        const escapedChar = this.escapeXml(cell.char);
+        textElements += `<text transform="translate(${posX}, ${posY}) rotate(${deg})" font-size="${g.fontSize}px" fill="${inkColor}" fill-opacity="${op}">${escapedChar}</text>\n`;
+      }
+    } else {
+      const fontSize = defaultFontSize;
+      const halfCellW = (cellWidth / 2);
+      const halfCellH = (cellHeight / 2);
 
-        // Elemento principal
-        textElements += `<text x="${posX}" y="${posY}" fill="${inkColor}" fill-opacity="${op}">${escapedChar}</text>\n`;
+      for (let r = 0; r < rows; r++) {
+        const row = cells[r];
+        if (!row) continue;
+        for (let c = 0; c < columns; c++) {
+          const cell = row[c];
+          if (!cell || !cell.char || cell.char === ' ' || cell.opacity <= 0.01) {
+            continue;
+          }
 
-        // Sobreimpresión mecánica
-        if (cell.overprintCount > 0) {
-          const offX1 = (cell.x + halfCellW + 0.35).toFixed(2);
-          const offY1 = (cell.y + halfCellH + 0.2).toFixed(2);
-          const opOver = (cell.opacity * 0.8).toFixed(3);
-          textElements += `<text x="${offX1}" y="${offY1}" fill="${inkColor}" fill-opacity="${opOver}">${escapedChar}</text>\n`;
+          const posX = (cell.x + halfCellW).toFixed(2);
+          const posY = (cell.y + halfCellH).toFixed(2);
+          const op = cell.opacity.toFixed(3);
+          const escapedChar = this.escapeXml(cell.char);
 
-          if (cell.overprintCount > 1) {
-            const offX2 = (cell.x + halfCellW - 0.25).toFixed(2);
-            const offY2 = (cell.y + halfCellH + 0.35).toFixed(2);
-            textElements += `<text x="${offX2}" y="${offY2}" fill="${inkColor}" fill-opacity="${opOver}">${escapedChar}</text>\n`;
+          // Elemento principal
+          textElements += `<text x="${posX}" y="${posY}" font-size="${fontSize}px" fill="${inkColor}" fill-opacity="${op}">${escapedChar}</text>\n`;
+
+          // Sobreimpresión mecánica
+          if (cell.overprintCount > 0) {
+            const offX1 = (cell.x + halfCellW + 0.35).toFixed(2);
+            const offY1 = (cell.y + halfCellH + 0.2).toFixed(2);
+            const opOver = (cell.opacity * 0.8).toFixed(3);
+            textElements += `<text x="${offX1}" y="${offY1}" font-size="${fontSize}px" fill="${inkColor}" fill-opacity="${opOver}">${escapedChar}</text>\n`;
+
+            if (cell.overprintCount > 1) {
+              const offX2 = (cell.x + halfCellW - 0.25).toFixed(2);
+              const offY2 = (cell.y + halfCellH + 0.35).toFixed(2);
+              textElements += `<text x="${offX2}" y="${offY2}" font-size="${fontSize}px" fill="${inkColor}" fill-opacity="${opOver}">${escapedChar}</text>\n`;
+            }
           }
         }
       }
@@ -64,7 +79,7 @@ export class SvgRenderer {
       @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&amp;family=JetBrains+Mono:wght@400;700&amp;family=Roboto+Mono:wght@400;700&amp;display=swap');
       text {
         font-family: '${config.fontFamily}', 'Courier Prime', monospace;
-        font-size: ${fontSize}px;
+        font-size: ${defaultFontSize}px;
         text-anchor: middle;
         dominant-baseline: central;
       }

@@ -56,7 +56,12 @@ class LetratoApp {
       paperTheme: 'white',
       overprintStrength: 2,
       caseTransform: 'original',
-      ignoreWhitespace: false
+      ignoreWhitespace: false,
+      contourThreshold: 35,
+      contourMinLength: 30,
+      contourFontSize: 11,
+      contourDensity: 2,
+      contourHatching: true
     };
 
     this.imageProcessor = new ImageProcessor();
@@ -136,6 +141,32 @@ class LetratoApp {
 
     this.bindRangeInput('input-aspect', 'val-aspect', (val) => {
       this.config.charAspectRatio = parseFloat(val);
+      this.recompute();
+    });
+
+    // Controles específicos de Modo Contorno
+    this.bindRangeInput('input-contour-thresh', 'val-contour-thresh', (val) => {
+      this.config.contourThreshold = parseInt(val, 10);
+      this.recompute();
+      return `${val}%`;
+    });
+
+    this.bindRangeInput('input-contour-size', 'val-contour-size', (val) => {
+      this.config.contourFontSize = parseInt(val, 10);
+      this.recompute();
+      return `${val} px`;
+    });
+
+    this.bindRangeInput('input-contour-density', 'val-contour-density', (val) => {
+      const num = parseInt(val, 10);
+      this.config.contourDensity = num;
+      this.recompute();
+      return num === 1 ? 'Baja (1)' : num === 2 ? 'Media (2)' : 'Alta (3)';
+    });
+
+    const hatchingCheck = document.getElementById('check-contour-hatching') as HTMLInputElement;
+    hatchingCheck?.addEventListener('change', () => {
+      this.config.contourHatching = hatchingCheck.checked;
       this.recompute();
     });
 
@@ -402,12 +433,14 @@ class LetratoApp {
       this.config
     );
 
-    // 3. Generar Celdas según Modo
+    // 3. Generar Celdas o Trazos según Modo
+    const rawImageData = this.imageProcessor.getImageData(this.currentImage, imgW, imgH);
     this.currentMatrix = this.generator.generateMatrix(
       grid,
       luminanceMatrix,
       edgeMatrix,
-      this.config
+      this.config,
+      rawImageData
     );
 
     const t1 = performance.now();
@@ -437,10 +470,12 @@ class LetratoApp {
     const toscoDiv = document.getElementById('controls-mode-tosco') as HTMLElement;
     const letratoDiv = document.getElementById('controls-mode-letrato') as HTMLElement;
     const typewriterDiv = document.getElementById('controls-mode-typewriter') as HTMLElement;
+    const contornoDiv = document.getElementById('controls-mode-contorno') as HTMLElement;
 
-    toscoDiv.style.display = this.config.mode === 'tosco' ? 'flex' : 'none';
-    letratoDiv.style.display = this.config.mode === 'letrato' ? 'flex' : 'none';
-    typewriterDiv.style.display = this.config.mode === 'typewriter' ? 'flex' : 'none';
+    if (toscoDiv) toscoDiv.style.display = this.config.mode === 'tosco' ? 'flex' : 'none';
+    if (letratoDiv) letratoDiv.style.display = this.config.mode === 'letrato' ? 'flex' : 'none';
+    if (typewriterDiv) typewriterDiv.style.display = this.config.mode === 'typewriter' ? 'flex' : 'none';
+    if (contornoDiv) contornoDiv.style.display = this.config.mode === 'contorno' ? 'flex' : 'none';
   }
 
   private bindRangeInput(
@@ -473,9 +508,17 @@ class LetratoApp {
     const aspectEl = document.getElementById('telemetry-aspect');
     const fpsEl = document.getElementById('telemetry-fps');
 
-    if (gridEl) gridEl.textContent = `${grid.columns} col × ${grid.rows} fil`;
-    if (cellsEl) cellsEl.textContent = `${(grid.columns * grid.rows).toLocaleString()} letras`;
-    if (aspectEl) aspectEl.textContent = `Relación: ${this.config.charAspectRatio.toFixed(2)}`;
+    if (this.config.mode === 'contorno' && this.currentMatrix?.contourGlyphs) {
+      const pathsCount = this.currentMatrix.contourPaths?.length || 0;
+      const glyphsCount = this.currentMatrix.contourGlyphs.length;
+      if (gridEl) gridEl.textContent = `${pathsCount} trazos de contorno`;
+      if (cellsEl) cellsEl.textContent = `${glyphsCount.toLocaleString()} letras en curva`;
+      if (aspectEl) aspectEl.textContent = `Modo: Caligrama Vectorial`;
+    } else {
+      if (gridEl) gridEl.textContent = `${grid.columns} col × ${grid.rows} fil`;
+      if (cellsEl) cellsEl.textContent = `${(grid.columns * grid.rows).toLocaleString()} letras`;
+      if (aspectEl) aspectEl.textContent = `Relación: ${this.config.charAspectRatio.toFixed(2)}`;
+    }
     if (fpsEl) fpsEl.textContent = `Render: ${durationMs} ms`;
   }
 
@@ -519,6 +562,15 @@ class LetratoApp {
 
   private copyText(): void {
     if (!this.currentMatrix) return;
+
+    if (this.config.mode === 'contorno' && this.currentMatrix.contourGlyphs) {
+      const text = this.currentMatrix.contourGlyphs.map((g) => g.char).join('');
+      navigator.clipboard.writeText(text).then(() => {
+        alert('¡El texto de los trazos del contorno fue copiado al portapapeles!');
+      });
+      return;
+    }
+
     const lines = this.currentMatrix.cells.map((row) => row.map((cell) => cell.char).join(''));
     const fullText = lines.join('\n');
     navigator.clipboard.writeText(fullText).then(() => {

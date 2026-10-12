@@ -71,6 +71,10 @@
               <span class="mode-btn-title">Modo «Máquina de Escribir»</span>
               <span class="mode-btn-desc">Homenaje a Flora Stacey (1898). Tono logrado por sobreimpresión mecánica.</span>
             </button>
+            <button class="mode-btn" data-mode="contorno">
+              <span class="mode-btn-title">Modo «Contorno» (Caligrama)</span>
+              <span class="mode-btn-desc">El texto dibuja las líneas y rasgos del rostro fluyendo por sus curvas naturales.</span>
+            </button>
           </div>
         </section>
 
@@ -83,6 +87,8 @@
               <option value="artemisia-gentileschi">Preset: Artemisia Gentileschi</option>
               <option value="hipatia-alejandria">Preset: Hipatia de Alejandría</option>
               <option value="don-samuel">Preset: El Letratito de Don Samuel</option>
+              <option value="frase-corta">Preset: Frase Corta (Test de Bucle Cíclico)</option>
+              <option value="lorem-ipsum">Preset: Lorem Ipsum (Aleatorio)</option>
               <option value="custom">Texto Personalizado...</option>
             </select>
             <textarea id="story-text" class="story-textarea" placeholder="Pega aquí la historia, biografía, poema o carta de la persona retratada..."></textarea>
@@ -236,6 +242,32 @@
             <span style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;">
               Simula múltiples golpes de tipo de plomo sobre la cinta en las sombras.
             </span>
+          </div>
+
+          <!-- Control Modo Contorno / Caligrama -->
+          <div id="controls-mode-contorno" class="control-group" style="display: none;">
+            <div class="control-label-row">
+              <span>Sensibilidad de Borde</span>
+              <span id="val-contour-thresh" class="control-value">35%</span>
+            </div>
+            <input type="range" id="input-contour-thresh" min="15" max="75" value="35" />
+
+            <div class="control-label-row" style="margin-top: 6px;">
+              <span>Tamaño de Letra en Curva</span>
+              <span id="val-contour-size" class="control-value">11 px</span>
+            </div>
+            <input type="range" id="input-contour-size" min="7" max="20" value="11" />
+
+            <div class="control-label-row" style="margin-top: 6px;">
+              <span>Densidad de Trazos</span>
+              <span id="val-contour-density" class="control-value">Media (2)</span>
+            </div>
+            <input type="range" id="input-contour-density" min="1" max="3" step="1" value="2" />
+
+            <label class="checkbox-row" style="margin-top: 8px;">
+              <input type="checkbox" id="check-contour-hatching" checked />
+              <span>Tramado tipográfico en sombras</span>
+            </label>
           </div>
         </section>
 
