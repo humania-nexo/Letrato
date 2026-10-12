@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>LETRATO — De lejos un rostro, de cerca una historia | PWA</title>
+    <meta name="description" content="Generador de retratos hechos exclusivamente con letras y palabras. De lejos se ve un rostro; de cerca se lee su historia. Procesamiento 100% local-first y privado." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#101216" />
+    <link rel="stylesheet" href="/src/ui/styles.css" />
+  </head>
+  <body>
+    <!-- CABECERA -->
+    <header class="app-header">
+      <div class="brand-wrapper">
+        <h1 class="brand-title">LETRATO</h1>
+        <span class="brand-tagline">De lejos un rostro, de cerca una historia</span>
+      </div>
+
+      <div class="header-actions">
+        <div class="privacy-badge">
+          <span>🛡️</span>
+          <span>100% Local · Fotos privadas</span>
+        </div>
+        <button id="btn-about" class="header-btn" title="Historia y concepto">
+          <span>📜</span>
+          <span>Concepto</span>
+        </button>
+        <button id="btn-projects" class="header-btn" title="Proyectos guardados en este navegador">
+          <span>💾</span>
+          <span>Proyectos</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ÁREA DE TRABAJO PRINCIPAL (3 COLUMNAS) -->
+    <main class="app-workspace">
+      <!-- PANEL IZQUIERDO: ORIGEN Y TEXTO -->
+      <aside class="sidebar left-sidebar">
+        <!-- 1. FOTOGRAFÍA -->
+        <section class="panel-section">
+          <h2 class="section-title"><span>📷</span> 1. Fotografía</h2>
+          <div id="dropzone" class="upload-dropzone">
+            <input type="file" id="file-input" accept="image/*" />
+            <div class="dropzone-icon">📁</div>
+            <p class="dropzone-text">Arrastra una foto o haz clic</p>
+            <p class="dropzone-subtext">JPG, PNG, WebP o SVG</p>
+          </div>
+          <button id="btn-sample-photo" class="sample-photo-btn">
+            Cargar Retrato Canónico de Prueba
+          </button>
+          <span style="font-size: 0.65rem; color: var(--text-dim); text-align: center;">
+            Usa fotos con consentimiento de la persona retratada.
+          </span>
+        </section>
+
+        <!-- 2. MODO -->
+        <section class="panel-section">
+          <h2 class="section-title"><span>⚙️</span> 2. Modo de Creación</h2>
+          <div class="mode-selector">
+            <button class="mode-btn" data-mode="tosco">
+              <span class="mode-btn-title">Modo «Tosco» (ASCII)</span>
+              <span class="mode-btn-desc">Arte ASCII clásico con rampa de densidad. El primer experimento de Adrián.</span>
+            </button>
+            <button class="mode-btn active" data-mode="letrato">
+              <span class="mode-btn-title">Modo «Letrato» (Historia)</span>
+              <span class="mode-btn-desc">El texto recorre el rostro en orden de lectura. El tono modula la tinta.</span>
+            </button>
+            <button class="mode-btn" data-mode="typewriter">
+              <span class="mode-btn-title">Modo «Máquina de Escribir»</span>
+              <span class="mode-btn-desc">Homenaje a Flora Stacey (1898). Tono logrado por sobreimpresión mecánica.</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- 3. LA HISTORIA -->
+        <section class="panel-section" style="flex: 1;">
+          <h2 class="section-title"><span>✍️</span> 3. La Historia</h2>
+          <div class="story-textarea-wrapper">
+            <select id="preset-select" class="preset-select">
+              <option value="flora-stacey">Preset: Flora Stacey (1898)</option>
+              <option value="artemisia-gentileschi">Preset: Artemisia Gentileschi</option>
+              <option value="hipatia-alejandria">Preset: Hipatia de Alejandría</option>
+              <option value="don-samuel">Preset: El Letratito de Don Samuel</option>
+              <option value="custom">Texto Personalizado...</option>
+            </select>
+            <textarea id="story-text" class="story-textarea" placeholder="Pega aquí la historia, biografía, poema o carta de la persona retratada..."></textarea>
+            <div class="story-meta">
+              <span id="char-counter">0 caracteres</span>
+              <span id="word-counter">0 palabras</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <select id="case-select" class="select-input" style="flex: 1;">
+                <option value="original">Texto original</option>
+                <option value="uppercase">TODO EN MAYÚSCULAS</option>
+                <option value="lowercase">todo en minúsculas</option>
+              </select>
+              <label class="checkbox-row" title="Omite los espacios para mayor compacidad del rostro">
+                <input type="checkbox" id="check-ignore-whitespace" />
+                <span>Sin espacios</span>
+              </label>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- PANEL CENTRAL: LIENZO Y HERRAMIENTAS -->
+      <section class="canvas-workspace">
+        <div class="canvas-toolbar">
+          <button id="btn-zoom-in" class="tool-btn" title="Acercar (Zoom In)"><span>🔍+</span></button>
+          <button id="btn-zoom-out" class="tool-btn" title="Alejar (Zoom Out)"><span>🔍-</span></button>
+          <button id="btn-zoom-reset" class="tool-btn" title="Ajustar a pantalla"><span>1:1</span></button>
+          <button id="btn-toggle-magnifier" class="tool-btn" title="Lupa de lectura interactiva">
+            <span>🔎</span>
+            <span>Lupa de Lectura</span>
+          </button>
+          
+          <div class="theme-pill-group" title="Color de fondo de papel">
+            <div class="theme-pill white active" data-theme="white" title="Papel Blanco"></div>
+            <div class="theme-pill sepia" data-theme="sepia" title="Papel Sepia Antiguo"></div>
+            <div class="theme-pill cream" data-theme="cream" title="Papel Crema / Marfil"></div>
+            <div class="theme-pill dark" data-theme="dark" title="Pizarra Oscura"></div>
+          </div>
+        </div>
+
+        <div id="viewport-container" class="canvas-viewport-container">
+          <canvas id="main-canvas"></canvas>
+        </div>
+
+        <div class="telemetry-bar">
+          <div class="telemetry-group">
+            <span id="telemetry-grid">0 col × 0 fil</span>
+            <span id="telemetry-cells">0 letras</span>
+          </div>
+          <div class="telemetry-group">
+            <span id="telemetry-aspect">Relación: 0.60</span>
+            <span id="telemetry-fps">Render: 0 ms</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- PANEL DERECHO: LABORATORIO DE TONO -->
+      <aside class="sidebar right-sidebar">
+        <!-- RESOLUCIÓN -->
+        <section class="panel-section">
+          <h2 class="section-title"><span>📐</span> Resolución</h2>
+          <div class="control-group">
+            <div class="control-label-row">
+              <span>Columnas (Detalle)</span>
+              <span id="val-columns" class="control-value">100</span>
+            </div>
+            <input type="range" id="input-columns" min="30" max="220" value="100" />
+          </div>
+        </section>
+
+        <!-- AJUSTES TONALES -->
+        <section class="panel-section">
+          <h2 class="section-title"><span>🌗</span> Calibración Tonal</h2>
+          
+          <div class="control-group">
+            <div class="control-label-row">
+              <span>Contraste</span>
+              <span id="val-contrast" class="control-value">+20</span>
+            </div>
+            <input type="range" id="input-contrast" min="-100" max="100" value="20" />
+          </div>
+
+          <div class="control-group">
+            <div class="control-label-row">
+              <span>Brillo</span>
+              <span id="val-brightness" class="control-value">0</span>
+            </div>
+            <input type="range" id="input-brightness" min="-100" max="100" value="0" />
+          </div>
+
+          <div class="control-group">
+            <div class="control-label-row">
+              <span>Gamma (Medios Tonos)</span>
+              <span id="val-gamma" class="control-value">1.0</span>
+            </div>
+            <input type="range" id="input-gamma" min="0.4" max="2.4" step="0.05" value="1.0" />
+          </div>
+
+          <div class="control-group">
+            <div class="control-label-row">
+              <span>Realce Facial (Bordes Sobel)</span>
+              <span id="val-edges" class="control-value">0%</span>
+            </div>
+            <input type="range" id="input-edges" min="0" max="100" value="0" />
+          </div>
+
+          <label class="checkbox-row" style="margin-top: 4px;">
+            <input type="checkbox" id="check-invert" />
+            <span>Invertir luminancia (Negativo)</span>
+          </label>
+        </section>
+
+        <!-- AJUSTES ESPECÍFICOS DE MODO -->
+        <section class="panel-section">
+          <h2 class="section-title"><span>🎯</span> Ajuste de Modo</h2>
+          
+          <!-- Control Modo Letrato -->
+          <div id="controls-mode-letrato" class="control-group">
+            <div class="control-label-row">
+              <span>Legibilidad Mínima</span>
+              <span id="val-legibility" class="control-value">18%</span>
+            </div>
+            <input type="range" id="input-legibility" min="0.05" max="0.45" step="0.01" value="0.18" />
+            <span style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;">
+              Garantiza que el texto nunca desaparezca en zonas muy claras.
+            </span>
+          </div>
+
+          <!-- Control Modo Tosco -->
+          <div id="controls-mode-tosco" class="control-group" style="display: none;">
+            <div class="control-label-row">
+              <span>Rampa de Caracteres</span>
+            </div>
+            <select id="select-ramp" class="select-input">
+              <option value="clasica">Clásica ( .:-=+*#%@)</option>
+              <option value="densa">Densa Extensa</option>
+              <option value="maquina">Máquina de escribir ( .,:;co*#@)</option>
+              <option value="bloques">Bloques UTF-8 ( ░▒▓█)</option>
+              <option value="minimalista">Minimalista ( .:+*#@)</option>
+            </select>
+          </div>
+
+          <!-- Control Modo Máquina de Escribir -->
+          <div id="controls-mode-typewriter" class="control-group" style="display: none;">
+            <div class="control-label-row">
+              <span>Fuerza de Sobreimpresión</span>
+              <span id="val-overprint" class="control-value">2 pasadas</span>
+            </div>
+            <input type="range" id="input-overprint" min="1" max="3" step="1" value="2" />
+            <span style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;">
+              Simula múltiples golpes de tipo de plomo sobre la cinta en las sombras.
+            </span>
+          </div>
+        </section>
+
+        <!-- TIPOGRAFÍA Y CALIBRACIÓN -->
+        <section class="panel-section">
+          <h2 class="section-title"><span>🔤</span> Tipografía</h2>
+          <div class="control-group">
+            <select id="select-font" class="select-input">
+              <option value="Courier Prime">Courier Prime (Máquina clásica)</option>
+              <option value="JetBrains Mono">JetBrains Mono (Geométrica)</option>
+              <option value="Roboto Mono">Roboto Mono (Moderna)</option>
+            </select>
+          </div>
+
+          <div class="control-group" style="margin-top: 6px;">
+            <div class="control-label-row">
+              <span>Aspecto de Carácter</span>
+              <span id="val-aspect" class="control-value">0.60</span>
+            </div>
+            <input type="range" id="input-aspect" min="0.45" max="0.75" step="0.01" value="0.60" />
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <!-- BARRA INFERIOR DE EXPORTACIÓN -->
+    <footer class="export-bar">
+      <div class="export-left">
+        <button id="btn-save-project" class="btn-secondary">
+          <span>💾</span>
+          <span>Guardar Proyecto</span>
+        </button>
+        <button id="btn-copy-text" class="btn-secondary">
+          <span>📋</span>
+          <span>Copiar Texto</span>
+        </button>
+      </div>
+
+      <div class="export-right">
+        <select id="select-png-scale" class="select-input" style="width: auto;">
+          <option value="1x">PNG Normal (1x)</option>
+          <option value="2x" selected>PNG Póster (2x)</option>
+          <option value="4x">PNG Imprenta 300 DPI (4x)</option>
+        </select>
+        <button id="btn-export-png" class="btn-secondary">
+          <span>🖼️</span>
+          <span>Exportar PNG</span>
+        </button>
+        <button id="btn-export-pdf" class="btn-secondary">
+          <span>📄</span>
+          <span>Exportar PDF</span>
+        </button>
+        <button id="btn-export-svg" class="btn-primary">
+          <span>⚡</span>
+          <span>Exportar SVG Vectorial</span>
+        </button>
+      </div>
+    </footer>
+
+    <!-- MODAL ACERCA DE / CONCEPTO -->
+    <div id="modal-about" class="modal-overlay">
+      <div class="modal-box">
+        <h2>LETRATO: El Rostro y la Memoria</h2>
+        <p>
+          Un <strong>Letrato</strong> es una obra visual donde una imagen está compuesta exclusivamente de texto. 
+          De lejos se reconoce un rostro; de cerca se lee la historia de esa persona.
+        </p>
+        <div class="quote-box">
+          «En 1898, Flora Stacey compuso una mariposa con su máquina de escribir Bar-Lock. 
+          Adrián rescata su técnica olvidada en DinastIAT y le dedica el nombre: Letrato, porque en la billetera de Don Samuel, un retrato y una carta son la misma cosa.»
+          <br /><br />
+          — <em>El Manuscrito de Ceniza</em> (SAPIENSIA Clan / Anigami Agadni)
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-dim);">
+          <strong>Nota de honestidad:</strong> Flora Stacey no acuñó la palabra «Letrato». El término es creación de David (Anigami Agadni) y se lo dedicamos a ella para devolver a la luz su audacia pionera.
+        </p>
+        <p style="font-size: 0.8rem; color: var(--text-dim);">
+          <strong>Privacidad absoluta:</strong> Este software es una PWA local-first. Todo el procesamiento de imágenes ocurre dentro de la memoria de tu dispositivo. Ningún archivo ni texto se envía a servidores externos.
+        </p>
+        <button id="btn-close-about" class="modal-close-btn">Entendido</button>
+      </div>
+    </div>
+
+    <!-- MODAL PROYECTOS GUARDADOS -->
+    <div id="modal-projects" class="modal-overlay">
+      <div class="modal-box" style="max-height: 80vh; overflow-y: auto;">
+        <h2>Proyectos Guardados en este Dispositivo</h2>
+        <div id="saved-projects-list" style="display: flex; flex-direction: column; gap: 8px; margin: 10px 0;">
+          <!-- Lista dinámica -->
+        </div>
+        <button id="btn-close-projects" class="modal-close-btn">Cerrar</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
