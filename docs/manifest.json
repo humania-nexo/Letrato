@@ -1,0 +1,16 @@
+{
+  "name": "LETRATO — Generador de Retratos con Letras",
+  "short_name": "Letrato",
+  "description": "De lejos un rostro, de cerca una historia. Generador de arte tipográfico y retratos hechos de letras. 100% local-first y privado.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#101216",
+  "theme_color": "#101216",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
