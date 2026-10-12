@@ -8,8 +8,8 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#101216" />
-    <script type="module" crossorigin src="./assets/template-ByYfu76X.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/template-DL21_9VG.css">
+    <script type="module" crossorigin src="./assets/template-CNXXH3AP.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/template-DyC3G9uX.css">
   </head>
   <body>
     <!-- CABECERA -->
@@ -131,6 +131,11 @@
           </div>
         </div>
 
+        <div id="dinastia-indicator" class="dinastia-processing-badge" style="display: none;">
+          <span class="dinastia-pulse"></span>
+          <span>DinastIA™ · Imprimiendo resultado…</span>
+        </div>
+
         <div id="viewport-container" class="canvas-viewport-container">
           <canvas id="main-canvas"></canvas>
         </div>
@@ -144,6 +149,12 @@
             <span id="telemetry-aspect">Relación: 0.60</span>
             <span id="telemetry-fps">Render: 0 ms</span>
           </div>
+        </div>
+
+        <!-- LORE AL PIE DE PÁGINA (EL MANUSCRITO DE CENIZA) -->
+        <div class="lore-footer-bar">
+          <span class="lore-quote">«Para la impresora seguían siendo letras. Para el sistema seguían siendo datos. Pero para ellas, por primera vez, era un espejo.»</span>
+          <span class="lore-source">— El Manuscrito de Ceniza</span>
         </div>
       </section>
 
@@ -342,6 +353,10 @@
           <span>📋</span>
           <span>Copiar Texto</span>
         </button>
+        <button id="btn-print-test" class="btn-secondary" title="Comprobar escala de grises real e imprimir directamente">
+          <span>🖨️</span>
+          <span>Imprimir Prueba</span>
+        </button>
       </div>
 
       <div class="export-right">
@@ -368,23 +383,37 @@
     <!-- MODAL ACERCA DE / CONCEPTO -->
     <div id="modal-about" class="modal-overlay">
       <div class="modal-box">
-        <h2>LETRATO: El Rostro y la Memoria</h2>
+        <h2>LETRATO: De lejos un rostro, de cerca una historia</h2>
         <p>
-          Un <strong>Letrato</strong> es una obra visual donde una imagen está compuesta exclusivamente de texto. 
-          De lejos se reconoce un rostro; de cerca se lee la historia de esa persona.
+          Un <strong>Letrato</strong> es una obra visual donde una imagen está compuesta exclusivamente de palabras. 
+          De lejos se reconoce la mirada y los rasgos de una persona; de cerca se lee la memoria y la verdad de su historia.
         </p>
+
         <div class="quote-box">
-          «En 1898, Flora Stacey compuso una mariposa con su máquina de escribir Bar-Lock. 
-          Adrián rescata su técnica olvidada en DinastIAT y le dedica el nombre: Letrato, porque en la billetera de Don Samuel, un retrato y una carta son la misma cosa.»
+          «En 1898, Flora Stacey compuso la silueta de una mariposa con su máquina de escribir Bar-Lock, pulsando tecla por tecla con paciencia de orfebre. Casi nadie se acordó de ella en las crónicas oficiales de la tecnología, pero su gesto humilde fundó una rebelión invisible: demostrar que una herramienta concebida para la fría contabilidad podía ser un instrumento de gracia humana y belleza poética. Adrián rescata su nombre en DinastIA™ y bautiza a esta técnica como Letrato en su honor.»
           <br /><br />
-          — <em>El Manuscrito de Ceniza</em> (SAPIENSIA Clan / Anigami Agadni)
+          <em>«Para la impresora seguían siendo letras. Para el sistema seguían siendo datos. Pero para ellas, por primera vez, era un espejo.»</em>
+          <br /><br />
+          — <strong>El Manuscrito de Ceniza</strong> (SAPIENSIA Clan / Anigami Agadni)
         </div>
-        <p style="font-size: 0.8rem; color: var(--text-dim);">
-          <strong>Nota de honestidad:</strong> Flora Stacey no acuñó la palabra «Letrato». El término es creación de David (Anigami Agadni) y se lo dedicamos a ella para devolver a la luz su audacia pionera.
+
+        <div style="background: rgba(197, 160, 89, 0.1); border-left: 3px solid var(--accent-gold); padding: 12px 16px; border-radius: 6px; margin: 12px 0;">
+          <p style="font-size: 0.88rem; color: var(--accent-gold); font-weight: 600; margin: 0;">
+            Nota de honestidad:
+          </p>
+          <p style="font-size: 0.84rem; color: var(--text-main); margin-top: 4px; line-height: 1.4;">
+            Flora Stacey no inventó la palabra Letrato. El nombre es nuestro; se lo dedicamos a ella.
+          </p>
+        </div>
+
+        <p style="font-size: 0.78rem; color: var(--text-dim); margin-top: 8px;">
+          <strong>Escala de grises pura (DeviceGray):</strong> Para imprenta monocromática real, LETRATO calcula tonos de negro directos (0 a 255) sin tramas de transparencia, reproduciendo toda la gama tonal con calidad de museo.
         </p>
-        <p style="font-size: 0.8rem; color: var(--text-dim);">
-          <strong>Privacidad absoluta:</strong> Este software es una PWA local-first. Todo el procesamiento de imágenes ocurre dentro de la memoria de tu dispositivo. Ningún archivo ni texto se envía a servidores externos.
+
+        <p style="font-size: 0.78rem; color: var(--text-dim); margin-top: 4px;">
+          <strong>Procesamiento local y privado:</strong> PWA 100% offline-first. Tus fotos y tus textos no viajan a internet ni a ningún servidor externo.
         </p>
+
         <button id="btn-close-about" class="modal-close-btn">Entendido</button>
       </div>
     </div>

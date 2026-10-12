@@ -184,11 +184,20 @@ export class LetratoGenerator {
   private prepareTextStream(text: string, caseTransform: 'original' | 'uppercase' | 'lowercase', ignoreWhitespace: boolean): string[] {
     let clean = (text || '').trim();
     if (!clean) {
-      clean = 'LETRATO ';
+      clean = 'LETRATO · ';
     }
 
     // Normalizar saltos de línea y tabuladores a espacios simples
     clean = clean.replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ');
+
+    // Manejo de símbolo ™: reemplazar automáticamente por (TM) para evitar glifos mutilados en fuentes monoespaciadas
+    clean = clean.replace(/™/g, '(TM)');
+    clean = clean.replace(/DinastIAT\b/g, 'DinastIA(TM)');
+
+    // Agregar separador al final para que el final de una vuelta no se pegue al inicio de la siguiente
+    if (!clean.endsWith(' ') && !clean.endsWith('·')) {
+      clean += ' · ';
+    }
 
     if (ignoreWhitespace) {
       clean = clean.replace(/\s+/g, '');

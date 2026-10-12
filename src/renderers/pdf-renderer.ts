@@ -45,8 +45,8 @@ export class PdfRenderer {
     const posX = (pageWidth - targetWidth) / 2;
     const posY = (pageHeight - targetHeight) / 2;
 
-    // Generar canvas temporal en ultra alta resolución (3x) para máxima nitidez de impresión
-    const scaleFactor = 3;
+    // Generar canvas temporal en ultra alta resolución (4x = ~300 DPI para imprenta)
+    const scaleFactor = 4;
     const offCanvas = document.createElement('canvas');
     offCanvas.width = totalWidth * scaleFactor;
     offCanvas.height = totalHeight * scaleFactor;
@@ -59,19 +59,28 @@ export class PdfRenderer {
       renderer.drawMatrixContent(ctx, matrix);
     }
 
-    const imgData = offCanvas.toDataURL('image/jpeg', 0.95);
+    // Usar PNG sin pérdidas para preservar los niveles de gris puros sin artefactos de compresión JPEG
+    const imgData = offCanvas.toDataURL('image/png');
 
     // Agregar imagen centrada en el documento PDF
-    doc.addImage(imgData, 'JPEG', posX, posY, targetWidth, targetHeight, undefined, 'FAST');
+    doc.addImage(imgData, 'PNG', posX, posY, targetWidth, targetHeight, undefined, 'FAST');
 
-    // Pie de página sutil
+    // Pie de página editorial con la frase del libro
     doc.setFont('courier', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(7.5);
+    doc.setTextColor(110, 110, 110);
+    doc.text(
+      `«Para la impresora seguían siendo letras. Para el sistema seguían siendo datos. Pero para ellas, por primera vez, era un espejo.»`,
+      pageWidth / 2,
+      pageHeight - 8,
+      { align: 'center' }
+    );
+    doc.setFontSize(6.5);
     doc.setTextColor(150, 150, 150);
     doc.text(
-      `LETRATO · De lejos un rostro, de cerca una historia · SAPIENSIA Clan`,
+      `LETRATO · El Manuscrito de Ceniza · DinastIA(TM) · SAPIENSIA Clan`,
       pageWidth / 2,
-      pageHeight - 6,
+      pageHeight - 4.5,
       { align: 'center' }
     );
 

@@ -657,6 +657,68 @@ canvas#main-canvas {
   color: var(--accent-gold);
 }
 
+/* LORE BAR AL PIE */
+.lore-footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  text-align: center;
+  user-select: none;
+}
+
+.lore-quote {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.lore-source {
+  color: var(--accent-gold);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* DINASTIA PROCESSING BADGE */
+.dinastia-processing-badge {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(16, 18, 22, 0.92);
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 50;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.dinastia-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-gold);
+  box-shadow: 0 0 10px var(--accent-gold);
+  animation: dinastiaBlink 0.9s infinite alternate;
+}
+
+@keyframes dinastiaBlink {
+  from { opacity: 0.3; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1.2); }
+}
+
 /* RESPONSIVE */
 @media (max-width: 1024px) {
   .app-workspace {
@@ -664,5 +726,51 @@ canvas#main-canvas {
   }
   .sidebar.right-sidebar {
     display: none;
+  }
+}
+
+/* MODO IMPRESIÓN DIRECTA (COMPROBACIÓN EN PAPEL MONOCROMÁTICO) */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .app-header,
+  .sidebar,
+  .canvas-toolbar,
+  .telemetry-bar,
+  .lore-footer-bar,
+  .export-bar,
+  .modal-overlay,
+  .dinastia-processing-badge {
+    display: none !important;
+  }
+  .app-workspace {
+    display: block !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .canvas-workspace {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+  #viewport-container {
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+  #main-canvas {
+    max-width: 100% !important;
+    height: auto !important;
+    box-shadow: none !important;
+    display: block !important;
+    margin: 0 auto !important;
   }
 }

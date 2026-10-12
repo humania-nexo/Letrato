@@ -321,6 +321,15 @@ export class ContourTracer {
     }
     cleanText = cleanText.replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ');
 
+    // Manejo de símbolo ™: reemplazar por (TM) para evitar glifos deformados
+    cleanText = cleanText.replace(/™/g, '(TM)');
+    cleanText = cleanText.replace(/DinastIAT\b/g, 'DinastIA(TM)');
+
+    // Agregar separador al final para que el final de una vuelta no se pegue al inicio de la siguiente
+    if (!cleanText.endsWith(' ') && !cleanText.endsWith('·')) {
+      cleanText += ' · ';
+    }
+
     if (config.ignoreWhitespace) {
       cleanText = cleanText.replace(/\s+/g, '');
     }

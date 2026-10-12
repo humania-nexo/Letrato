@@ -318,6 +318,7 @@ class LetratoApp {
     document.getElementById('btn-export-pdf')?.addEventListener('click', () => this.exportPdf());
     document.getElementById('btn-copy-text')?.addEventListener('click', () => this.copyText());
     document.getElementById('btn-save-project')?.addEventListener('click', () => this.saveCurrentProject());
+    document.getElementById('btn-print-test')?.addEventListener('click', () => window.print());
 
     // Modales
     this.initModals();
@@ -449,46 +450,64 @@ class LetratoApp {
     this.viewport.panY = (containerH - imgH * fitScale) / 2;
   }
 
+  private showDinastiaIndicator(show: boolean): void {
+    const el = document.getElementById('dinastia-indicator');
+    if (el) {
+      el.style.display = show ? 'inline-flex' : 'none';
+    }
+  }
+
   private recompute(): void {
     if (!this.currentImage) return;
 
-    const t0 = performance.now();
+    this.showDinastiaIndicator(true);
 
-    const imgW = this.currentImage.naturalWidth || 600;
-    const imgH = this.currentImage.naturalHeight || 750;
+    setTimeout(() => {
+      if (!this.currentImage) {
+        this.showDinastiaIndicator(false);
+        return;
+      }
 
-    // 1. Calcular Cuadrícula
-    const grid = calculateGridDimensions(
-      imgW,
-      imgH,
-      this.config.columns,
-      this.config.charAspectRatio
-    );
+      const t0 = performance.now();
 
-    // 2. Extraer Matriz de Luminancia y Bordes
-    const { luminanceMatrix, edgeMatrix } = this.imageProcessor.extractLuminanceMatrix(
-      this.currentImage,
-      grid,
-      this.config
-    );
+      const imgW = this.currentImage.naturalWidth || 600;
+      const imgH = this.currentImage.naturalHeight || 750;
 
-    // 3. Generar Celdas o Trazos según Modo
-    const rawImageData = this.imageProcessor.getImageData(this.currentImage, imgW, imgH);
-    this.currentMatrix = this.generator.generateMatrix(
-      grid,
-      luminanceMatrix,
-      edgeMatrix,
-      this.config,
-      rawImageData
-    );
+      // 1. Calcular Cuadrícula
+      const grid = calculateGridDimensions(
+        imgW,
+        imgH,
+        this.config.columns,
+        this.config.charAspectRatio
+      );
 
-    const t1 = performance.now();
+      // 2. Extraer Matriz de Luminancia y Bordes
+      const { luminanceMatrix, edgeMatrix } = this.imageProcessor.extractLuminanceMatrix(
+        this.currentImage,
+        grid,
+        this.config
+      );
 
-    // Actualizar Telemetría
-    this.updateTelemetry(grid, Math.round(t1 - t0));
+      // 3. Generar Celdas o Trazos según Modo
+      const rawImageData = this.imageProcessor.getImageData(this.currentImage, imgW, imgH);
+      this.currentMatrix = this.generator.generateMatrix(
+        grid,
+        luminanceMatrix,
+        edgeMatrix,
+        this.config,
+        rawImageData
+      );
 
-    // Renderizar
-    this.renderCanvas();
+      const t1 = performance.now();
+
+      // Actualizar Telemetría
+      this.updateTelemetry(grid, Math.round(t1 - t0));
+
+      // Renderizar
+      this.renderCanvas();
+
+      this.showDinastiaIndicator(false);
+    }, 20);
   }
 
   private renderCanvas(): void {

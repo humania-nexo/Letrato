@@ -14,7 +14,7 @@ export const PRESET_STORIES: PresetStory[] = [
     title: 'Homenaje a Flora Stacey (1898)',
     author: 'El Manuscrito de Ceniza / SAPIENSIA Clan',
     summary: 'La pionera que en 1898 creó una mariposa con su máquina de escribir Bar-Lock.',
-    text: `En mil ochocientos noventa y ocho, Flora Stacey tomó una máquina de escribir Bar-Lock y, pulsando tecla por tecla con paciencia de orfebre, compuso la silueta de una mariposa sobre el papel. Casi nadie se acordó de ella en las crónicas oficiales de la tecnología, pero su gesto humilde fundó una rebelión invisible: demostrar que una herramienta concebida para la fría contabilidad y los informes de oficina podía ser un instrumento de gracia humana y belleza poética. Adrián rescata su nombre en DinastIAT y bautiza a esta técnica como Letrato en su honor. De lejos se ve una mirada; de cerca se lee la memoria viva de quien no merecía ser olvidada.`
+    text: `En mil ochocientos noventa y ocho, Flora Stacey tomó una máquina de escribir Bar-Lock y, pulsando tecla por tecla con paciencia de orfebre, compuso la silueta de una mariposa sobre el papel. Casi nadie se acordó de ella en las crónicas oficiales de la tecnología, pero su gesto humilde fundó una rebelión invisible: demostrar que una herramienta concebida para la fría contabilidad y los informes de oficina podía ser un instrumento de gracia humana y belleza poética. Adrián rescata su nombre en DinastIA™ y bautiza a esta técnica como Letrato en su honor. De lejos se ve una mirada; de cerca se lee la memoria viva de quien no merecía ser olvidada.`
   },
   {
     id: 'artemisia-gentileschi',
