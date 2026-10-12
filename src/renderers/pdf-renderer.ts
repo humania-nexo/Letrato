@@ -78,7 +78,7 @@ export class PdfRenderer {
     doc.setFontSize(6.5);
     doc.setTextColor(150, 150, 150);
     doc.text(
-      `LETRATO · El Manuscrito de Ceniza · DinastIA(TM) · SAPIENSIA Clan`,
+      `LETRATO · El Manuscrito de Ceniza · DinastIA(TM) · SAPIENSIA Clan (sapiensiaclan.com)`,
       pageWidth / 2,
       pageHeight - 4.5,
       { align: 'center' }
