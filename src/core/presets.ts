@@ -85,8 +85,8 @@ export function getSamplePortraitDataUrl(): string {
       </linearGradient>
     </defs>
     
-    <!-- Fondo -->
-    <rect width="600" height="750" fill="url(#bgGrad)"/>
+    <!-- Fondo Limpio -->
+    <rect width="600" height="750" fill="#ffffff"/>
     
     <!-- Silueta Cuello y Hombros -->
     <path d="M180,680 C180,560 220,530 240,490 L360,490 C380,530 420,560 420,680 Z" fill="#222222"/>

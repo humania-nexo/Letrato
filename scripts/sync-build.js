@@ -26,9 +26,10 @@ if (fs.existsSync(distDir)) {
   const distAssets = path.join(distDir, 'assets');
   const rootAssets = path.join(rootDir, 'assets');
   if (fs.existsSync(distAssets)) {
-    if (!fs.existsSync(rootAssets)) {
-      fs.mkdirSync(rootAssets, { recursive: true });
+    if (fs.existsSync(rootAssets)) {
+      fs.rmSync(rootAssets, { recursive: true, force: true });
     }
+    fs.mkdirSync(rootAssets, { recursive: true });
     const files = fs.readdirSync(distAssets);
     for (const f of files) {
       fs.copyFileSync(path.join(distAssets, f), path.join(rootAssets, f));
@@ -46,9 +47,10 @@ if (fs.existsSync(distDir)) {
   fs.writeFileSync(path.join(docsDir, '.nojekyll'), '', 'utf-8');
 
   const docsAssets = path.join(docsDir, 'assets');
-  if (!fs.existsSync(docsAssets)) {
-    fs.mkdirSync(docsAssets, { recursive: true });
+  if (fs.existsSync(docsAssets)) {
+    fs.rmSync(docsAssets, { recursive: true, force: true });
   }
+  fs.mkdirSync(docsAssets, { recursive: true });
   if (fs.existsSync(distAssets)) {
     const files = fs.readdirSync(distAssets);
     for (const f of files) {

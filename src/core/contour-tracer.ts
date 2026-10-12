@@ -13,22 +13,36 @@ export class ContourTracer {
     const data = imageData.data;
     const totalPixels = width * height;
 
-    // 1. Convertir a luminancia en escala de grises
+    // 1. Convertir a luminancia en escala de grises con Auto-Niveles adaptativos
     const gray = new Float32Array(totalPixels);
+    let minGray = 1.0;
+    let maxGray = 0.0;
+
     for (let i = 0; i < totalPixels; i++) {
       const idx = i * 4;
       const r = data[idx];
       const g = data[idx + 1];
       const b = data[idx + 2];
-      // Luminancia ITU-R BT.601
-      gray[i] = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      gray[i] = lum;
+      if (lum < minGray) minGray = lum;
+      if (lum > maxGray) maxGray = lum;
+    }
+
+    // Auto-estiramiento de histograma si el dibujo tiene poco contraste
+    if (config.autoLevels && maxGray - minGray > 0.1) {
+      const range = maxGray - minGray;
+      for (let i = 0; i < totalPixels; i++) {
+        gray[i] = Math.max(0, Math.min(1, (gray[i] - minGray) / range));
+      }
     }
 
     // 2. Gradientes de Sobel y Detección de Bordes
     const magnitude = new Float32Array(totalPixels);
     const angle = new Float32Array(totalPixels);
 
-    const threshold = (config.contourThreshold || 35) / 100;
+    // Umbral calibrado (default 18% para captar trazos de grafito)
+    const threshold = (config.contourThreshold ?? 18) / 100;
 
     for (let y = 1; y < height - 1; y++) {
       const rowOffset = y * width;
@@ -56,7 +70,7 @@ export class ContourTracer {
     // 3. Encadenamiento de píxeles de borde en polilíneas continuas
     const visited = new Uint8Array(totalPixels);
     const rawPaths: Point2D[][] = [];
-    const minLength = config.contourMinLength || 30;
+    const minLength = config.contourMinLength ?? 18;
 
     // Recorrer con paso dinámico según densidad
     const step = Math.max(1, 4 - (config.contourDensity || 2));
@@ -68,7 +82,7 @@ export class ContourTracer {
 
         // Iniciar un nuevo trazo
         const path = this.followContour(x, y, width, height, magnitude, visited, threshold);
-        if (path.length >= 4) {
+        if (path.length >= 3) {
           rawPaths.push(path);
         }
       }
@@ -79,8 +93,8 @@ export class ContourTracer {
     let pathIdCounter = 0;
 
     for (const raw of rawPaths) {
-      const simplified = this.ramerDouglasPeucker(raw, 2.5);
-      if (simplified.length < 3) continue;
+      const simplified = this.ramerDouglasPeucker(raw, 1.8);
+      if (simplified.length < 2) continue;
 
       const smoothed = this.chaikinSmooth(simplified, 2);
       const len = this.calculatePathLength(smoothed);

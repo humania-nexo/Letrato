@@ -197,6 +197,43 @@
           </div>
 
           <label class="checkbox-row" style="margin-top: 4px;">
+            <input type="checkbox" id="check-autolevels" checked />
+            <span style="font-weight: 600; color: var(--accent-gold);">Auto-Niveles (Rango dinámico adaptativo)</span>
+          </label>
+
+          <div class="control-group">
+            <div class="control-label-row">
+              <span>Sensibilidad a Trazos (Lápiz / Ojos)</span>
+              <span id="val-line-sens" class="control-value">60%</span>
+            </div>
+            <input type="range" id="input-line-sens" min="0" max="100" value="60" />
+            <span style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;">
+              Preserva trazos finos de 1px (ojos, labios, grafito) para que no se diluyan al promediar.
+            </span>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label-row">
+              <span>Limpieza de Fondo (Papel Blanco)</span>
+              <span id="val-bg-cutoff" class="control-value">16%</span>
+            </div>
+            <input type="range" id="input-bg-cutoff" min="0" max="45" value="16" />
+            <span style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;">
+              Deja limpio el papel exterior para recortar y definir con nitidez la silueta humana.
+            </span>
+          </div>
+
+          <label class="checkbox-row" style="margin-top: 4px;">
+            <input type="checkbox" id="check-variable-weight" checked />
+            <span>Grosor Dinámico (Bold/Heavy en cabello y sombras)</span>
+          </label>
+
+          <label class="checkbox-row" style="margin-top: 4px;">
+            <input type="checkbox" id="check-pause-whitespace" checked />
+            <span>Lectura Continua (El texto avanza solo sobre la figura)</span>
+          </label>
+
+          <label class="checkbox-row" style="margin-top: 4px;">
             <input type="checkbox" id="check-invert" />
             <span>Invertir luminancia (Negativo)</span>
           </label>
@@ -214,7 +251,7 @@
             </div>
             <input type="range" id="input-legibility" min="0.05" max="0.45" step="0.01" value="0.18" />
             <span style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;">
-              Garantiza que el texto nunca desaparezca en zonas muy claras.
+              Opacidad base de la tinta en las sombras más tenues.
             </span>
           </div>
 
@@ -248,9 +285,9 @@
           <div id="controls-mode-contorno" class="control-group" style="display: none;">
             <div class="control-label-row">
               <span>Sensibilidad de Borde</span>
-              <span id="val-contour-thresh" class="control-value">35%</span>
+              <span id="val-contour-thresh" class="control-value">18%</span>
             </div>
-            <input type="range" id="input-contour-thresh" min="15" max="75" value="35" />
+            <input type="range" id="input-contour-thresh" min="5" max="60" value="18" />
 
             <div class="control-label-row" style="margin-top: 6px;">
               <span>Tamaño de Letra en Curva</span>

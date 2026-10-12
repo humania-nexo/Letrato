@@ -53,7 +53,8 @@ export class SvgRenderer {
           const escapedChar = this.escapeXml(cell.char);
 
           // Elemento principal
-          textElements += `<text x="${posX}" y="${posY}" font-size="${fontSize}px" fill="${inkColor}" fill-opacity="${op}">${escapedChar}</text>\n`;
+          const weight = cell.fontWeight || 400;
+          textElements += `<text x="${posX}" y="${posY}" font-size="${fontSize}px" font-weight="${weight}" fill="${inkColor}" fill-opacity="${op}">${escapedChar}</text>\n`;
 
           // Sobreimpresión mecánica
           if (cell.overprintCount > 0) {

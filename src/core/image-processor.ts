@@ -77,7 +77,58 @@ export class ImageProcessor {
     const rawLuminance = new Float32Array(totalCells);
     const edgeMatrix = new Float32Array(totalCells);
 
-    // 1. Muestreo de luminancia promedio por cada celda
+    // 1. Pre-análisis de histograma global para Auto-Niveles adaptativos
+    let pMin = 0;
+    let pMax = 1;
+    let medianLum = 0.5;
+
+    if (config.autoLevels) {
+      const hist = new Uint32Array(256);
+      let totalSamples = 0;
+      const sampleStep = Math.max(1, Math.floor((width * height) / 30000));
+      for (let i = 0; i < data.length; i += sampleStep * 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const l = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+        hist[l]++;
+        totalSamples++;
+      }
+
+      const p2Count = totalSamples * 0.02;
+      const p50Count = totalSamples * 0.50;
+      const p98Count = totalSamples * 0.98;
+
+      let cum = 0;
+      let p2Found = false;
+      let p50Found = false;
+
+      for (let b = 0; b < 256; b++) {
+        cum += hist[b];
+        if (!p2Found && cum >= p2Count) {
+          pMin = b / 255;
+          p2Found = true;
+        }
+        if (!p50Found && cum >= p50Count) {
+          medianLum = b / 255;
+          p50Found = true;
+        }
+        if (cum >= p98Count) {
+          pMax = b / 255;
+          break;
+        }
+      }
+
+      // Si el rango es muy comprimido (como en un boceto a lápiz), estirar con seguridad
+      if (pMax - pMin < 0.12) {
+        pMin = 0;
+        pMax = 1;
+      }
+    }
+
+    // 2. Muestreo de celdas con preservación de líneas finas (Min-Pooling)
+    const lineWeight = Math.max(0, Math.min(1, (config.lineSensitivity ?? 60) / 100));
+
     for (let r = 0; r < rows; r++) {
       const startY = Math.floor(r * cellH);
       const endY = Math.min(height, Math.floor((r + 1) * cellH));
@@ -87,9 +138,9 @@ export class ImageProcessor {
         const endX = Math.min(width, Math.floor((c + 1) * cellW));
 
         let sumLum = 0;
+        let minLum = 255;
         let count = 0;
 
-        // Muestrear píxeles dentro de la celda (con paso para mantener alto rendimiento)
         const stepX = Math.max(1, Math.floor((endX - startX) / 8));
         const stepY = Math.max(1, Math.floor((endY - startY) / 8));
 
@@ -101,18 +152,35 @@ export class ImageProcessor {
             const green = data[idx + 1];
             const blue = data[idx + 2];
 
-            // Fórmula de luminancia perceptual ITU-R BT.601
+            // Luminancia perceptual ITU-R BT.601
             const lum = 0.299 * red + 0.587 * green + 0.114 * blue;
             sumLum += lum;
+            if (lum < minLum) {
+              minLum = lum;
+            }
             count++;
           }
         }
 
         const avgLum255 = count > 0 ? sumLum / count : 255;
-        let normLum = avgLum255 / 255; // 0 (negro) a 1 (blanco)
+        // Ponderar promedio con el píxel más oscuro para no borrar grafito o rasgos de 1px
+        const combinedLum255 = avgLum255 * (1 - lineWeight) + minLum * lineWeight;
+        let normLum = combinedLum255 / 255;
 
-        // 2. Aplicar Ajustes de Tono (Brillo, Contraste, Gamma)
-        normLum = this.applyToneCurves(normLum, config.brightness, config.contrast, config.gamma);
+        // Auto-Niveles: expandir rango dinámico a [0, 1]
+        if (config.autoLevels && pMax > pMin) {
+          normLum = (normLum - pMin) / (pMax - pMin);
+          normLum = Math.max(0, Math.min(1, normLum));
+        }
+
+        // Aplicar curvas de tono con pivote adaptativo
+        normLum = this.applyToneCurves(
+          normLum,
+          config.brightness,
+          config.contrast,
+          config.gamma,
+          medianLum
+        );
 
         if (config.invert) {
           normLum = 1.0 - normLum;
@@ -122,7 +190,7 @@ export class ImageProcessor {
       }
     }
 
-    // 3. Detección de bordes Sobel opcional para acento facial
+    // 3. Detección de bordes Sobel para realce facial
     if (config.edgeEnhancement > 0) {
       const factor = config.edgeEnhancement / 100;
       for (let r = 1; r < rows - 1; r++) {
@@ -152,12 +220,15 @@ export class ImageProcessor {
   }
 
   /**
-   * Curvas de calibración tonal:
-   * - Brillo [-100, 100]
-   * - Contraste [-100, 100]
-   * - Gamma [0.2, 3.0]
+   * Curvas de calibración tonal con pivote adaptativo
    */
-  private applyToneCurves(l: number, brightness: number, contrast: number, gamma: number): number {
+  private applyToneCurves(
+    l: number,
+    brightness: number,
+    contrast: number,
+    gamma: number,
+    pivot: number = 0.5
+  ): number {
     let result = l;
 
     // Brillo
@@ -165,11 +236,11 @@ export class ImageProcessor {
       result += brightness / 100;
     }
 
-    // Contraste
+    // Contraste centrado en el tono medio real del dibujo
     if (contrast !== 0) {
       const c = Math.max(-100, Math.min(100, contrast));
       const factor = (259 * (c + 255)) / (255 * (259 - c));
-      result = factor * (result - 0.5) + 0.5;
+      result = factor * (result - pivot) + pivot;
     }
 
     // Clamping intermedio

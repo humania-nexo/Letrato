@@ -53,6 +53,8 @@ export class LetratoGenerator {
     const ramp = config.asciiRamp && config.asciiRamp.length > 0 ? config.asciiRamp : ' .:-=+*#%@';
     const rampLength = ramp.length;
 
+    const cutoff = (config.backgroundCutoff ?? 16) / 100;
+
     for (let r = 0; r < rows; r++) {
       const rowCells: CellRenderData[] = [];
       const rowOffset = r * columns;
@@ -65,55 +67,89 @@ export class LetratoGenerator {
         let char = ' ';
         let opacity = 1.0;
         let overprintCount = 0;
+        let fontWeight: string | number = '400';
+
+        // Calcular oscuridad tonal efectiva
+        let darkness = 1.0 - lum;
+        if (edge > 0) {
+          darkness = Math.min(1.0, darkness + edge * 0.4);
+        }
+
+        // Peso tipográfico dinámico según profundidad de sombra
+        if (config.variableWeight) {
+          if (darkness > 0.65) {
+            fontWeight = '800'; // Bold / ExtraBlack para cabello, pupilas y trazos oscuros
+          } else if (darkness > 0.35) {
+            fontWeight = '600'; // SemiBold para rasgos y contornos
+          } else {
+            fontWeight = '400'; // Regular para sombreados suaves
+          }
+        }
 
         switch (config.mode) {
           case 'tosco': {
-            // Mapeo ASCII clásico de rampa de densidad
-            const darkness = 1.0 - lum;
-            const rampIndex = Math.min(
-              rampLength - 1,
-              Math.max(0, Math.floor(darkness * rampLength))
-            );
-            char = ramp[rampIndex];
-            opacity = 1.0;
+            if (darkness < cutoff) {
+              char = ' ';
+              opacity = 0;
+            } else {
+              const relDark = (darkness - cutoff) / Math.max(0.01, 1.0 - cutoff);
+              const rampIndex = Math.min(
+                rampLength - 1,
+                Math.max(1, Math.floor(relDark * rampLength))
+              );
+              char = ramp[rampIndex];
+              opacity = 1.0;
+            }
             break;
           }
 
           case 'letrato': {
-            // El texto recorre la cuadrícula en orden de lectura
-            char = textLength > 0 ? streamChars[textPointer % textLength] : ' ';
-            textPointer++;
+            if (darkness < cutoff) {
+              // Zona de papel limpio / fondo claro: dejar espacio en blanco para recortar la silueta
+              char = ' ';
+              opacity = 0;
+            } else {
+              char = textLength > 0 ? streamChars[textPointer % textLength] : ' ';
+              if (config.pauseTextOnWhitespace) {
+                textPointer++; // El texto avanza solo sobre la figura para mantener lectura continua
+              }
 
-            // El tono modula la opacidad de la tinta (en papel blanco, oscuro = mayor opacidad)
-            const darkness = Math.min(1.0, (1.0 - lum) + edge * 0.5);
+              const relDark = (darkness - cutoff) / Math.max(0.01, 1.0 - cutoff);
+              const minFloor = Math.max(0.12, config.minLegibility || 0.18);
+              opacity = minFloor + (1.0 - minFloor) * Math.pow(relDark, 0.75);
+              opacity = Math.max(0, Math.min(1.0, opacity));
+            }
 
-            // Piso de legibilidad
-            const minFloor = config.minLegibility;
-            opacity = minFloor + (1.0 - minFloor) * darkness;
-            opacity = Math.max(minFloor, Math.min(1.0, opacity));
+            if (!config.pauseTextOnWhitespace) {
+              textPointer++;
+            }
             break;
           }
 
           case 'typewriter': {
-            // Modo Flora Stacey: tinta pura sin niveles de gris, tono logrado por sobreimpresión
-            char = textLength > 0 ? streamChars[textPointer % textLength] : ' ';
-            textPointer++;
-
-            const darkness = Math.min(1.0, (1.0 - lum) + edge * 0.4);
-
-            if (darkness < 0.15) {
+            if (darkness < cutoff) {
               char = ' ';
               opacity = 0;
               overprintCount = 0;
-            } else if (darkness < 0.45) {
-              opacity = 0.55;
-              overprintCount = 0;
-            } else if (darkness < 0.75) {
-              opacity = 0.95;
-              overprintCount = 1;
             } else {
-              opacity = 1.0;
-              overprintCount = Math.min(3, config.overprintStrength || 2);
+              char = textLength > 0 ? streamChars[textPointer % textLength] : ' ';
+              if (config.pauseTextOnWhitespace) {
+                textPointer++;
+              }
+
+              opacity = 0.95;
+              const relDark = (darkness - cutoff) / Math.max(0.01, 1.0 - cutoff);
+              if (relDark > 0.65) {
+                overprintCount = Math.min(3, config.overprintStrength || 2);
+              } else if (relDark > 0.35) {
+                overprintCount = 1;
+              } else {
+                overprintCount = 0;
+              }
+            }
+
+            if (!config.pauseTextOnWhitespace) {
+              textPointer++;
             }
             break;
           }
@@ -125,6 +161,7 @@ export class LetratoGenerator {
           y: r * grid.cellHeight,
           luminance: lum,
           opacity,
+          fontWeight,
           overprintCount,
           edgeStrength: edge
         });

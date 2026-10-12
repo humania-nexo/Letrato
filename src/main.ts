@@ -42,9 +42,9 @@ class LetratoApp {
   constructor() {
     this.config = {
       mode: 'letrato',
-      columns: 100,
+      columns: 110,
       brightness: 0,
-      contrast: 20,
+      contrast: 25,
       gamma: 1.0,
       edgeEnhancement: 0,
       invert: false,
@@ -57,8 +57,16 @@ class LetratoApp {
       overprintStrength: 2,
       caseTransform: 'original',
       ignoreWhitespace: false,
-      contourThreshold: 35,
-      contourMinLength: 30,
+
+      // Parámetros de alta fidelidad para retratos y dibujos
+      autoLevels: true,
+      lineSensitivity: 60,
+      backgroundCutoff: 16,
+      variableWeight: true,
+      pauseTextOnWhitespace: true,
+
+      contourThreshold: 18,
+      contourMinLength: 20,
       contourFontSize: 11,
       contourDensity: 2,
       contourHatching: true
@@ -125,6 +133,37 @@ class LetratoApp {
       this.config.edgeEnhancement = parseInt(val, 10);
       this.recompute();
       return `${val}%`;
+    });
+
+    // Controles de fidelidad facial
+    this.bindRangeInput('input-line-sens', 'val-line-sens', (val) => {
+      this.config.lineSensitivity = parseInt(val, 10);
+      this.recompute();
+      return `${val}%`;
+    });
+
+    this.bindRangeInput('input-bg-cutoff', 'val-bg-cutoff', (val) => {
+      this.config.backgroundCutoff = parseInt(val, 10);
+      this.recompute();
+      return `${val}%`;
+    });
+
+    const autolevelsCheck = document.getElementById('check-autolevels') as HTMLInputElement;
+    autolevelsCheck?.addEventListener('change', () => {
+      this.config.autoLevels = autolevelsCheck.checked;
+      this.recompute();
+    });
+
+    const varWeightCheck = document.getElementById('check-variable-weight') as HTMLInputElement;
+    varWeightCheck?.addEventListener('change', () => {
+      this.config.variableWeight = varWeightCheck.checked;
+      this.recompute();
+    });
+
+    const pauseWhiteCheck = document.getElementById('check-pause-whitespace') as HTMLInputElement;
+    pauseWhiteCheck?.addEventListener('change', () => {
+      this.config.pauseTextOnWhitespace = pauseWhiteCheck.checked;
+      this.recompute();
     });
 
     this.bindRangeInput('input-legibility', 'val-legibility', (val) => {
