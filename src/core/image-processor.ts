@@ -67,12 +67,7 @@ export class ImageProcessor {
     image: HTMLImageElement,
     grid: GridDimensions,
     config: LetratoConfig
-  ): {
-    luminanceMatrix: Float32Array;
-    edgeMatrix: Float32Array;
-    centroidXMatrix: Float32Array;
-    centroidYMatrix: Float32Array;
-  } {
+  ): { luminanceMatrix: Float32Array; edgeMatrix: Float32Array } {
     const { columns, rows } = grid;
     const width = grid.totalWidth;
     const height = grid.totalHeight;
@@ -98,8 +93,6 @@ export class ImageProcessor {
     const totalCells = columns * rows;
     const rawLuminance = new Float32Array(totalCells);
     const edgeMatrix = new Float32Array(totalCells);
-    const centroidXMatrix = new Float32Array(totalCells);
-    const centroidYMatrix = new Float32Array(totalCells);
 
     // 1. Pre-análisis de histograma global para Auto-Niveles adaptativos
     let pMin = 0;
@@ -109,7 +102,7 @@ export class ImageProcessor {
     if (config.autoLevels) {
       const hist = new Uint32Array(256);
       let totalSamples = 0;
-      const sampleStep = Math.max(1, Math.floor((width * height) / 40000));
+      const sampleStep = Math.max(1, Math.floor((width * height) / 30000));
       for (let i = 0; i < data.length; i += sampleStep * 4) {
         const r = data[i];
         const g = data[i + 1];
@@ -150,35 +143,26 @@ export class ImageProcessor {
       }
     }
 
-    // 2. Muestreo de alta precisión por celda (Min-Pooling + Centroide Sub-Celda para Lentes/Cejas/Ojos)
-    const lineWeight = Math.max(0, Math.min(1, (config.lineSensitivity ?? 65) / 100));
+    // 2. Muestreo de celdas con preservación de líneas finas (Min-Pooling)
+    const lineWeight = Math.max(0, Math.min(1, (config.lineSensitivity ?? 60) / 100));
 
     for (let r = 0; r < rows; r++) {
       const startY = Math.floor(r * cellH);
-      const endY = Math.min(height, Math.max(startY + 1, Math.floor((r + 1) * cellH)));
-      const spanY = Math.max(1, endY - startY);
+      const endY = Math.min(height, Math.floor((r + 1) * cellH));
 
       for (let c = 0; c < columns; c++) {
         const startX = Math.floor(c * cellW);
-        const endX = Math.min(width, Math.max(startX + 1, Math.floor((c + 1) * cellW)));
-        const spanX = Math.max(1, endX - startX);
+        const endX = Math.min(width, Math.floor((c + 1) * cellW));
 
         let sumLum = 0;
         let minLum = 255;
-        let maxLum = 0;
         let count = 0;
 
-        let sumWX = 0;
-        let sumWY = 0;
-        let sumW = 0;
-
-        // Muestreo fino (paso 1 o 2 px máximo para nunca perder armazones de lentes o pestañas de 1px)
-        const stepX = Math.max(1, Math.floor(spanX / 12));
-        const stepY = Math.max(1, Math.floor(spanY / 12));
+        const stepX = Math.max(1, Math.floor((endX - startX) / 8));
+        const stepY = Math.max(1, Math.floor((endY - startY) / 8));
 
         for (let y = startY; y < endY; y += stepY) {
           const rowOffset = y * width * 4;
-          const relY = (y - startY) / spanY - 0.5;
           for (let x = startX; x < endX; x += stepX) {
             const idx = rowOffset + x * 4;
             const red = data[idx];
@@ -188,37 +172,17 @@ export class ImageProcessor {
             // Luminancia perceptual ITU-R BT.601
             const lum = 0.299 * red + 0.587 * green + 0.114 * blue;
             sumLum += lum;
-            if (lum < minLum) minLum = lum;
-            if (lum > maxLum) maxLum = lum;
-            count++;
-
-            // Peso cúbico de oscuridad para atraer la letra hacia el trazo fino dentro de la celda
-            const darkNorm = (255 - lum) / 255;
-            const w = darkNorm * darkNorm * darkNorm;
-            if (w > 0.001) {
-              const relX = (x - startX) / spanX - 0.5;
-              sumWX += w * relX;
-              sumWY += w * relY;
-              sumW += w;
+            if (lum < minLum) {
+              minLum = lum;
             }
+            count++;
           }
         }
 
-        const cellIndex = r * columns + c;
         const avgLum255 = count > 0 ? sumLum / count : 255;
-        const intraCellContrast = (maxLum - minLum) / 255;
-
-        // Si dentro de la celda pasa un rasgo fino (ej. montura de lentes o ceja sobre piel clara),
-        // reforzamos el peso del píxel más oscuro para que el trazo no se diluya
-        const dynamicLineWeight = Math.min(0.92, lineWeight + intraCellContrast * 0.25);
-        const combinedLum255 = avgLum255 * (1 - dynamicLineWeight) + minLum * dynamicLineWeight;
+        // Ponderar promedio con el píxel más oscuro para no borrar grafito o rasgos de 1px
+        const combinedLum255 = avgLum255 * (1 - lineWeight) + minLum * lineWeight;
         let normLum = combinedLum255 / 255;
-
-        // Guardar centroide sub-celda si existe variación interna de trazo
-        if (sumW > 0.01 && intraCellContrast > 0.08) {
-          centroidXMatrix[cellIndex] = Math.max(-0.45, Math.min(0.45, sumWX / sumW));
-          centroidYMatrix[cellIndex] = Math.max(-0.45, Math.min(0.45, sumWY / sumW));
-        }
 
         // Auto-Niveles: expandir rango dinámico a [0, 1]
         if (config.autoLevels && pMax > pMin) {
@@ -239,57 +203,13 @@ export class ImageProcessor {
           normLum = 1.0 - normLum;
         }
 
-        rawLuminance[cellIndex] = Math.max(0, Math.min(1, normLum));
+        rawLuminance[r * columns + c] = Math.max(0, Math.min(1, normLum));
       }
     }
 
-    // 2.5 Realce Local de Micro-Rasgos (DoG / CLAHE local para cejas, lentes, pupilas, nariz y labios)
-    const microStrength = (config.microDetail ?? 75) / 100;
-    if (microStrength > 0) {
-      const baseLum = new Float32Array(rawLuminance);
-      const radius = 3; // Ventana local 7x7 celdas
-
-      for (let r = 0; r < rows; r++) {
-        const rMin = Math.max(0, r - radius);
-        const rMax = Math.min(rows - 1, r + radius);
-
-        for (let c = 0; c < columns; c++) {
-          const cMin = Math.max(0, c - radius);
-          const cMax = Math.min(columns - 1, c + radius);
-
-          let localSum = 0;
-          let localCount = 0;
-
-          for (let nr = rMin; nr <= rMax; nr++) {
-            const rowOff = nr * columns;
-            for (let nc = cMin; nc <= cMax; nc++) {
-              localSum += baseLum[rowOff + nc];
-              localCount++;
-            }
-          }
-
-          const idx = r * columns + c;
-          const localMean = localSum / localCount;
-          const current = baseLum[idx];
-          // localDiff > 0 significa que esta celda es más oscura que la piel/entorno inmediato
-          const localDiff = localMean - current;
-
-          if (localDiff > 0.008) {
-            // Rasgo oscuro local (ceja, armazón de lente, pestaña, pliegue labial): oscurecer con precisión
-            const boost = localDiff * microStrength * 1.55;
-            rawLuminance[idx] = Math.max(0, current - boost);
-          } else if (localDiff < -0.015) {
-            // Brillo local (reflejo pupilar, cristal de lente, tabique nasal): aclarar sutilmente
-            const highlight = (-localDiff) * microStrength * 0.45;
-            rawLuminance[idx] = Math.min(1, current + highlight);
-          }
-        }
-      }
-    }
-
-    // 3. Detección de bordes Sobel para realce facial y de monturas/ojos
-    const edgeFactor = Math.max((config.edgeEnhancement || 0) / 100, microStrength * 0.35);
-    if (edgeFactor > 0) {
+    // 3. Detección de bordes Sobel para realce facial
+    if (config.edgeEnhancement > 0) {
+      const factor = config.edgeEnhancement / 100;
       for (let r = 1; r < rows - 1; r++) {
         for (let c = 1; c < columns - 1; c++) {
           const tl = rawLuminance[(r - 1) * columns + (c - 1)];
@@ -305,16 +225,14 @@ export class ImageProcessor {
           const gy = -tl - 2 * tc - tr + bl + 2 * bc + br;
           const mag = Math.min(1, Math.sqrt(gx * gx + gy * gy));
 
-          edgeMatrix[r * columns + c] = mag * edgeFactor;
+          edgeMatrix[r * columns + c] = mag * factor;
         }
       }
     }
 
     return {
       luminanceMatrix: rawLuminance,
-      edgeMatrix,
-      centroidXMatrix,
-      centroidYMatrix
+      edgeMatrix
     };
   }
 

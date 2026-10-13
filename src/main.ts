@@ -47,7 +47,7 @@ class LetratoApp {
       showReadableText: true,
       subjectName: PRESET_STORIES[0].subjectName,
       subjectDate: PRESET_STORIES[0].subjectDate,
-      columns: 125,
+      columns: 110,
       brightness: 0,
       contrast: 25,
       gamma: 1.0,
@@ -65,18 +65,10 @@ class LetratoApp {
 
       // Parámetros de alta fidelidad para retratos y dibujos
       autoLevels: true,
-      lineSensitivity: 65,
-      microDetail: 75,
-      subCellSnap: true,
+      lineSensitivity: 60,
       backgroundCutoff: 16,
       variableWeight: true,
       pauseTextOnWhitespace: true,
-
-      // Modo Superposición (Estilo Leslie Nichols)
-      superpositionMaxLayers: 5,
-      superpositionAngleSpread: 65,
-      superpositionInkDensity: 52,
-      superpositionAiryLight: true,
 
       contourThreshold: 18,
       contourMinLength: 20,
@@ -163,15 +155,9 @@ class LetratoApp {
       return `${val}%`;
     });
 
-    // Controles de fidelidad facial y micro-rasgos
+    // Controles de fidelidad facial
     this.bindRangeInput('input-line-sens', 'val-line-sens', (val) => {
       this.config.lineSensitivity = parseInt(val, 10);
-      this.recompute();
-      return `${val}%`;
-    });
-
-    this.bindRangeInput('input-micro-detail', 'val-micro-detail', (val) => {
-      this.config.microDetail = parseInt(val, 10);
       this.recompute();
       return `${val}%`;
     });
@@ -185,12 +171,6 @@ class LetratoApp {
     const autolevelsCheck = document.getElementById('check-autolevels') as HTMLInputElement;
     autolevelsCheck?.addEventListener('change', () => {
       this.config.autoLevels = autolevelsCheck.checked;
-      this.recompute();
-    });
-
-    const subcellSnapCheck = document.getElementById('check-subcell-snap') as HTMLInputElement;
-    subcellSnapCheck?.addEventListener('change', () => {
-      this.config.subCellSnap = subcellSnapCheck.checked;
       this.recompute();
     });
 
@@ -216,31 +196,6 @@ class LetratoApp {
       this.config.overprintStrength = parseInt(val, 10);
       this.recompute();
       return `${val} pasadas`;
-    });
-
-    // Controles específicos de Modo Superposición (Leslie Nichols)
-    this.bindRangeInput('input-super-layers', 'val-super-layers', (val) => {
-      this.config.superpositionMaxLayers = parseInt(val, 10);
-      this.recompute();
-      return `${val} capas`;
-    });
-
-    this.bindRangeInput('input-super-angle', 'val-super-angle', (val) => {
-      this.config.superpositionAngleSpread = parseInt(val, 10);
-      this.recompute();
-      return `${val}%`;
-    });
-
-    this.bindRangeInput('input-super-ink', 'val-super-ink', (val) => {
-      this.config.superpositionInkDensity = parseInt(val, 10);
-      this.recompute();
-      return `${val}%`;
-    });
-
-    const superAiryCheck = document.getElementById('check-super-airy') as HTMLInputElement;
-    superAiryCheck?.addEventListener('change', () => {
-      this.config.superpositionAiryLight = superAiryCheck.checked;
-      this.recompute();
     });
 
     this.bindRangeInput('input-aspect', 'val-aspect', (val) => {
@@ -617,24 +572,19 @@ class LetratoApp {
       const imgH = crop.targetHeight;
 
       // 1. Calcular Cuadrícula según proporción seleccionada (Cuadrada 1:1 / Vertical 3:4 / Original)
-      const effectiveCols =
-        this.config.mode === 'superposicion'
-          ? Math.max(40, Math.round(this.config.columns * 0.72))
-          : this.config.columns;
       const grid = calculateGridDimensions(
         imgW,
         imgH,
-        effectiveCols,
+        this.config.columns,
         this.config.charAspectRatio
       );
 
-      // 2. Extraer Matriz de Luminancia, Bordes y Centroides Sub-Celda
-      const { luminanceMatrix, edgeMatrix, centroidXMatrix, centroidYMatrix } =
-        this.imageProcessor.extractLuminanceMatrix(
-          this.currentImage,
-          grid,
-          this.config
-        );
+      // 2. Extraer Matriz de Luminancia y Bordes
+      const { luminanceMatrix, edgeMatrix } = this.imageProcessor.extractLuminanceMatrix(
+        this.currentImage,
+        grid,
+        this.config
+      );
 
       // 3. Generar Celdas o Trazos según Modo
       const rawImageData = this.imageProcessor.getImageData(
@@ -648,9 +598,7 @@ class LetratoApp {
         luminanceMatrix,
         edgeMatrix,
         this.config,
-        rawImageData,
-        centroidXMatrix,
-        centroidYMatrix
+        rawImageData
       );
 
       const t1 = performance.now();
@@ -686,13 +634,11 @@ class LetratoApp {
   private updateModeControlsVisibility(): void {
     const toscoDiv = document.getElementById('controls-mode-tosco') as HTMLElement;
     const letratoDiv = document.getElementById('controls-mode-letrato') as HTMLElement;
-    const superDiv = document.getElementById('controls-mode-superposicion') as HTMLElement;
     const typewriterDiv = document.getElementById('controls-mode-typewriter') as HTMLElement;
     const contornoDiv = document.getElementById('controls-mode-contorno') as HTMLElement;
 
     if (toscoDiv) toscoDiv.style.display = this.config.mode === 'tosco' ? 'flex' : 'none';
     if (letratoDiv) letratoDiv.style.display = this.config.mode === 'letrato' ? 'flex' : 'none';
-    if (superDiv) superDiv.style.display = this.config.mode === 'superposicion' ? 'flex' : 'none';
     if (typewriterDiv) typewriterDiv.style.display = this.config.mode === 'typewriter' ? 'flex' : 'none';
     if (contornoDiv) contornoDiv.style.display = this.config.mode === 'contorno' ? 'flex' : 'none';
   }
@@ -739,11 +685,6 @@ class LetratoApp {
       const glyphsCount = this.currentMatrix.contourGlyphs.length;
       if (gridEl) gridEl.textContent = `${pathsCount} trazos (${formatName})`;
       if (cellsEl) cellsEl.textContent = `${glyphsCount.toLocaleString()} letras en curva`;
-      if (aspectEl) aspectEl.textContent = this.config.showReadableText ? 'Con Ficha Legible' : 'Solo Letrato';
-    } else if (this.config.mode === 'superposicion' && this.currentMatrix?.contourGlyphs) {
-      const glyphsCount = this.currentMatrix.contourGlyphs.length;
-      if (gridEl) gridEl.textContent = `${this.config.superpositionMaxLayers} capas (${formatName})`;
-      if (cellsEl) cellsEl.textContent = `${glyphsCount.toLocaleString()} letras superpuestas`;
       if (aspectEl) aspectEl.textContent = this.config.showReadableText ? 'Con Ficha Legible' : 'Solo Letrato';
     } else {
       if (gridEl) gridEl.textContent = `${grid.columns}×${grid.rows} (${formatName})`;
@@ -797,13 +738,10 @@ class LetratoApp {
   private copyText(): void {
     if (!this.currentMatrix) return;
 
-    if (
-      (this.config.mode === 'contorno' || this.config.mode === 'superposicion') &&
-      this.currentMatrix.contourGlyphs
-    ) {
+    if (this.config.mode === 'contorno' && this.currentMatrix.contourGlyphs) {
       const text = this.currentMatrix.contourGlyphs.map((g) => g.char).join('');
       navigator.clipboard.writeText(text).then(() => {
-        alert('¡El texto de las capas del Letrato fue copiado al portapapeles!');
+        alert('¡El texto de los trazos del contorno fue copiado al portapapeles!');
       });
       return;
     }

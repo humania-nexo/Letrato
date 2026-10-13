@@ -101,11 +101,10 @@ export class CanvasRenderer {
     // Color base de tinta
     const inkBase = isDarkTheme ? '255, 255, 255' : '17, 17, 17';
 
-    // RENDERIZADO PARA MODO CONTORNO / CALIGRAMA Y MODO SUPERPOSICIÓN (ESTILO LESLIE NICHOLS)
-    if ((config.mode === 'contorno' || config.mode === 'superposicion') && matrix.contourGlyphs) {
+    // RENDERIZADO PARA MODO CONTORNO / CALIGRAMA
+    if (config.mode === 'contorno' && matrix.contourGlyphs) {
       targetCtx.textAlign = 'center';
       targetCtx.textBaseline = 'middle';
-      let lastFont = '';
 
       for (const g of matrix.contourGlyphs) {
         if (clipBounds) {
@@ -119,27 +118,13 @@ export class CanvasRenderer {
           }
         }
 
-        const weight =
-          config.mode === 'superposicion' && config.variableWeight && (g.layer || 0) >= 3
-            ? '700'
-            : '400';
-        const fontSpec = `${weight} ${g.fontSize}px ${config.fontFamily}, monospace`;
-        if (fontSpec !== lastFont) {
-          lastFont = fontSpec;
-          targetCtx.font = fontSpec;
-        }
-
+        targetCtx.save();
+        targetCtx.translate(g.x, g.y);
+        targetCtx.rotate(g.angle);
+        targetCtx.font = `${g.fontSize}px ${config.fontFamily}, monospace`;
         targetCtx.fillStyle = `rgba(${inkBase}, ${g.opacity})`;
-
-        if (Math.abs(g.angle) > 0.002) {
-          targetCtx.save();
-          targetCtx.translate(g.x, g.y);
-          targetCtx.rotate(g.angle);
-          targetCtx.fillText(g.char, 0, 0);
-          targetCtx.restore();
-        } else {
-          targetCtx.fillText(g.char, g.x, g.y);
-        }
+        targetCtx.fillText(g.char, 0, 0);
+        targetCtx.restore();
       }
 
       if (layout.enabled) {
@@ -149,8 +134,9 @@ export class CanvasRenderer {
     }
 
     // Configuración tipográfica para modos matriciales
-    const baseFontSize = grid.cellHeight * 0.95;
-    let currentFontSpec = '';
+    const fontSize = grid.cellHeight * 0.95;
+    let currentWeight = '400';
+    targetCtx.font = `${currentWeight} ${fontSize}px ${config.fontFamily}, monospace`;
     targetCtx.textAlign = 'center';
     targetCtx.textBaseline = 'middle';
 
@@ -178,13 +164,11 @@ export class CanvasRenderer {
         const posX = cell.x + halfCellW;
         const posY = cell.y + halfCellH;
 
-        // Modulación de grosor y escala de fuente para micro-rasgos y sombras densas
+        // Modulación de grosor de fuente para sombras densas
         const weight = String(cell.fontWeight || '400');
-        const scaledSize = (baseFontSize * (cell.fontScale || 1.0)).toFixed(1);
-        const fontSpec = `${weight} ${scaledSize}px ${config.fontFamily}, monospace`;
-        if (fontSpec !== currentFontSpec) {
-          currentFontSpec = fontSpec;
-          targetCtx.font = fontSpec;
+        if (weight !== currentWeight) {
+          currentWeight = weight;
+          targetCtx.font = `${currentWeight} ${fontSize}px ${config.fontFamily}, monospace`;
         }
 
         targetCtx.fillStyle = `rgba(${inkBase}, ${cell.opacity})`;
