@@ -5,16 +5,19 @@ import type {
   ProcessedMatrix
 } from './types';
 import { ContourTracer } from './contour-tracer';
+import { SuperpositionEngine } from './superposition-engine';
 
 export class LetratoGenerator {
   private contourTracer: ContourTracer;
+  private superpositionEngine: SuperpositionEngine;
 
   constructor() {
     this.contourTracer = new ContourTracer();
+    this.superpositionEngine = new SuperpositionEngine();
   }
 
   /**
-   * Genera la matriz bidimensional de celdas procesadas o el trazado de contornos tipográficos.
+   * Genera la matriz bidimensional de celdas procesadas o el trazado de contornos/superposición tipográfica.
    */
   public generateMatrix(
     grid: GridDimensions,
@@ -44,11 +47,33 @@ export class LetratoGenerator {
       };
     }
 
+    // Normalizar texto para el flujo
+    const streamChars = this.prepareTextStream(config.customText, config.caseTransform, config.ignoreWhitespace);
+
+    // Si el modo es Superposición (Estilo Leslie Nichols)
+    if (config.mode === 'superposicion') {
+      const glyphs = this.superpositionEngine.generateSuperpositionGlyphs(
+        grid,
+        luminanceMatrix,
+        edgeMatrix,
+        config,
+        streamChars,
+        centroidXMatrix,
+        centroidYMatrix
+      );
+
+      return {
+        grid,
+        cells: [],
+        luminanceMap: luminanceMatrix,
+        config,
+        contourGlyphs: glyphs
+      };
+    }
+
     const { columns, rows } = grid;
     const cells: CellRenderData[][] = [];
 
-    // Normalizar texto para el flujo
-    const streamChars = this.prepareTextStream(config.customText, config.caseTransform, config.ignoreWhitespace);
     let textPointer = 0;
     const textLength = streamChars.length;
 

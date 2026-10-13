@@ -101,10 +101,11 @@ export class CanvasRenderer {
     // Color base de tinta
     const inkBase = isDarkTheme ? '255, 255, 255' : '17, 17, 17';
 
-    // RENDERIZADO PARA MODO CONTORNO / CALIGRAMA
-    if (config.mode === 'contorno' && matrix.contourGlyphs) {
+    // RENDERIZADO PARA MODO CONTORNO / CALIGRAMA Y MODO SUPERPOSICIÓN (ESTILO LESLIE NICHOLS)
+    if ((config.mode === 'contorno' || config.mode === 'superposicion') && matrix.contourGlyphs) {
       targetCtx.textAlign = 'center';
       targetCtx.textBaseline = 'middle';
+      let lastFont = '';
 
       for (const g of matrix.contourGlyphs) {
         if (clipBounds) {
@@ -118,13 +119,27 @@ export class CanvasRenderer {
           }
         }
 
-        targetCtx.save();
-        targetCtx.translate(g.x, g.y);
-        targetCtx.rotate(g.angle);
-        targetCtx.font = `${g.fontSize}px ${config.fontFamily}, monospace`;
+        const weight =
+          config.mode === 'superposicion' && config.variableWeight && (g.layer || 0) >= 3
+            ? '700'
+            : '400';
+        const fontSpec = `${weight} ${g.fontSize}px ${config.fontFamily}, monospace`;
+        if (fontSpec !== lastFont) {
+          lastFont = fontSpec;
+          targetCtx.font = fontSpec;
+        }
+
         targetCtx.fillStyle = `rgba(${inkBase}, ${g.opacity})`;
-        targetCtx.fillText(g.char, 0, 0);
-        targetCtx.restore();
+
+        if (Math.abs(g.angle) > 0.002) {
+          targetCtx.save();
+          targetCtx.translate(g.x, g.y);
+          targetCtx.rotate(g.angle);
+          targetCtx.fillText(g.char, 0, 0);
+          targetCtx.restore();
+        } else {
+          targetCtx.fillText(g.char, g.x, g.y);
+        }
       }
 
       if (layout.enabled) {

@@ -22,16 +22,29 @@ export class SvgRenderer {
     const defaultFontSize = (cellHeight * 0.95).toFixed(2);
     let textElements = '';
 
-    // RENDERIZADO VECTORIAL PARA MODO CONTORNO CON GRIS REAL
-    if (config.mode === 'contorno' && matrix.contourGlyphs) {
+    // RENDERIZADO VECTORIAL PARA MODO CONTORNO Y MODO SUPERPOSICIÓN CON GRIS REAL
+    if ((config.mode === 'contorno' || config.mode === 'superposicion') && matrix.contourGlyphs) {
       for (const g of matrix.contourGlyphs) {
         const deg = ((g.angle * 180) / Math.PI).toFixed(1);
         const posX = g.x.toFixed(2);
         const posY = g.y.toFixed(2);
-        const solidColor = this.getSolidGrayscaleColor(g.opacity, config.paperTheme);
+        // En modo superposición, cada capa superior incrementa el tono de tinta efectiva
+        const effectiveOp =
+          config.mode === 'superposicion'
+            ? Math.min(1.0, g.opacity + (g.layer || 0) * 0.08)
+            : g.opacity;
+        const solidColor = this.getSolidGrayscaleColor(effectiveOp, config.paperTheme);
         const escapedChar = this.escapeXml(g.char);
+        const weight =
+          config.mode === 'superposicion' && config.variableWeight && (g.layer || 0) >= 3
+            ? 700
+            : 400;
 
-        textElements += `<text transform="translate(${posX}, ${posY}) rotate(${deg})" font-size="${g.fontSize}px" fill="${solidColor}">${escapedChar}</text>\n`;
+        if (Math.abs(g.angle) > 0.002) {
+          textElements += `<text transform="translate(${posX}, ${posY}) rotate(${deg})" font-size="${g.fontSize}px" font-weight="${weight}" fill="${solidColor}">${escapedChar}</text>\n`;
+        } else {
+          textElements += `<text x="${posX}" y="${posY}" font-size="${g.fontSize}px" font-weight="${weight}" fill="${solidColor}">${escapedChar}</text>\n`;
+        }
       }
     } else {
       const baseFontSize = cellHeight * 0.95;

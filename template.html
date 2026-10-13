@@ -91,9 +91,13 @@
               <span class="mode-btn-title">Modo «Letrato» (Historia)</span>
               <span class="mode-btn-desc">El texto recorre el rostro en orden de lectura. El tono modula la tinta.</span>
             </button>
+            <button class="mode-btn" data-mode="superposicion">
+              <span class="mode-btn-title">Modo «Superposición» (Leslie Nichols)</span>
+              <span class="mode-btn-desc">Superpone y gira múltiples capas de caracteres donde hay más sombra.</span>
+            </button>
             <button class="mode-btn" data-mode="typewriter">
               <span class="mode-btn-title">Modo «Máquina de Escribir»</span>
-              <span class="mode-btn-desc">Homenaje a Flora Stacey (1898). Tono logrado por sobreimpresión mecánica.</span>
+              <span class="mode-btn-desc">Homenaje a Flora Stacey (1898). Tono logrado por sobreimpresión en celda.</span>
             </button>
             <button class="mode-btn" data-mode="contorno">
               <span class="mode-btn-title">Modo «Contorno» (Caligrama)</span>
@@ -357,6 +361,38 @@
             <span style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;">
               Simula múltiples golpes de tipo de plomo sobre la cinta en las sombras.
             </span>
+          </div>
+
+          <!-- Control Modo Superposición (Leslie Nichols) -->
+          <div id="controls-mode-superposicion" class="control-group" style="display: none;">
+            <div class="control-label-row">
+              <span style="color: var(--accent-gold); font-weight: 600;">Capas en Sombra (Pasadas)</span>
+              <span id="val-super-layers" class="control-value">5 capas</span>
+            </div>
+            <input type="range" id="input-super-layers" min="2" max="7" step="1" value="5" />
+            <span style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;">
+              Cantidad de caracteres distintos que se apilan unos sobre otros donde hay más sombra.
+            </span>
+
+            <div class="control-label-row" style="margin-top: 8px;">
+              <span>Giro Direccional del Papel</span>
+              <span id="val-super-angle" class="control-value">65%</span>
+            </div>
+            <input type="range" id="input-super-angle" min="0" max="100" value="65" />
+            <span style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;">
+              Inclina las pasadas de sombra siguiendo el flujo de cabello, cejas y facciones.
+            </span>
+
+            <div class="control-label-row" style="margin-top: 8px;">
+              <span>Densidad de Cinta por Golpe</span>
+              <span id="val-super-ink" class="control-value">52%</span>
+            </div>
+            <input type="range" id="input-super-ink" min="25" max="85" value="52" />
+
+            <label class="checkbox-row" style="margin-top: 8px;">
+              <input type="checkbox" id="check-super-airy" checked />
+              <span>Espaciado aéreo en tonos suaves</span>
+            </label>
           </div>
 
           <!-- Control Modo Contorno / Caligrama -->

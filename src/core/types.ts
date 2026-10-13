@@ -1,4 +1,4 @@
-export type LetratoMode = 'tosco' | 'letrato' | 'typewriter' | 'contorno';
+export type LetratoMode = 'tosco' | 'letrato' | 'superposicion' | 'typewriter' | 'contorno';
 
 export type PaperTheme = 'white' | 'sepia' | 'dark' | 'cream';
 
@@ -26,6 +26,7 @@ export interface PlacedGlyph {
   angle: number; // Radianes
   opacity: number;
   fontSize: number;
+  layer?: number; // Capa de superposición (0 = base, 1..6 = sobreimpresión en sombra)
 }
 
 export interface LetratoConfig {
@@ -58,6 +59,12 @@ export interface LetratoConfig {
   backgroundCutoff: number; // 0 a 50 (Umbral de corte de papel limpio: recorta la silueta)
   variableWeight: boolean; // Modulación de grosor (Regular / Bold / Black en sombras)
   pauseTextOnWhitespace: boolean; // El texto fluye de forma continua sin fracturarse por espacios
+
+  // Parámetros específicos para Modo Superposición (Estilo Leslie Nichols)
+  superpositionMaxLayers: number; // 2 a 7 (capas de letras superpuestas en sombra profunda, default 5)
+  superpositionAngleSpread: number; // 0 a 100 (rotación direccional de frases siguiendo facciones/cabello, default 65)
+  superpositionInkDensity: number; // 25 a 85 (opacidad de cinta por cada golpe individual, default 52)
+  superpositionAiryLight: boolean; // Espaciado abierto de letras en luces suaves y fondo (como en Barbara 1999)
 
   // Parámetros específicos para Modo Contorno / Caligrama
   contourThreshold: number; // 5 a 60 (sensibilidad de detección de bordes, default 18)
