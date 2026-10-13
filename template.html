@@ -215,10 +215,10 @@
           <h2 class="section-title"><span>📐</span> Resolución</h2>
           <div class="control-group">
             <div class="control-label-row">
-              <span>Columnas (Detalle)</span>
-              <span id="val-columns" class="control-value">100</span>
+              <span>Columnas (Detalle Facial)</span>
+              <span id="val-columns" class="control-value">125</span>
             </div>
-            <input type="range" id="input-columns" min="30" max="220" value="100" />
+            <input type="range" id="input-columns" min="40" max="260" value="125" />
           </div>
         </section>
 
@@ -229,9 +229,9 @@
           <div class="control-group">
             <div class="control-label-row">
               <span>Contraste</span>
-              <span id="val-contrast" class="control-value">+20</span>
+              <span id="val-contrast" class="control-value">+25</span>
             </div>
-            <input type="range" id="input-contrast" min="-100" max="100" value="20" />
+            <input type="range" id="input-contrast" min="-100" max="100" value="25" />
           </div>
 
           <div class="control-group">
@@ -252,6 +252,28 @@
 
           <div class="control-group">
             <div class="control-label-row">
+              <span style="color: var(--accent-gold); font-weight: 600;">Micro-Rasgos (Cejas / Lentes / Mirada)</span>
+              <span id="val-micro-detail" class="control-value">75%</span>
+            </div>
+            <input type="range" id="input-micro-detail" min="0" max="100" value="75" />
+            <span style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;">
+              Filtro local DoG/CLAHE que detecta cejas, monturas de lentes, pestañas y pliegues sutiles.
+            </span>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label-row">
+              <span>Sensibilidad a Trazos (Lápiz / 1px)</span>
+              <span id="val-line-sens" class="control-value">65%</span>
+            </div>
+            <input type="range" id="input-line-sens" min="0" max="100" value="65" />
+            <span style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;">
+              Preserva trazos finos de 1px (aros de lentes, ojos, labios) para que no se diluyan.
+            </span>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label-row">
               <span>Realce Facial (Bordes Sobel)</span>
               <span id="val-edges" class="control-value">0%</span>
             </div>
@@ -259,20 +281,14 @@
           </div>
 
           <label class="checkbox-row" style="margin-top: 4px;">
-            <input type="checkbox" id="check-autolevels" checked />
-            <span style="font-weight: 600; color: var(--accent-gold);">Auto-Niveles (Rango dinámico adaptativo)</span>
+            <input type="checkbox" id="check-subcell-snap" checked />
+            <span style="font-weight: 600; color: var(--accent-gold);">Alineación Sub-Celda (Curvas continuas en lentes/cejas)</span>
           </label>
 
-          <div class="control-group">
-            <div class="control-label-row">
-              <span>Sensibilidad a Trazos (Lápiz / Ojos)</span>
-              <span id="val-line-sens" class="control-value">60%</span>
-            </div>
-            <input type="range" id="input-line-sens" min="0" max="100" value="60" />
-            <span style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;">
-              Preserva trazos finos de 1px (ojos, labios, grafito) para que no se diluyan al promediar.
-            </span>
-          </div>
+          <label class="checkbox-row" style="margin-top: 4px;">
+            <input type="checkbox" id="check-autolevels" checked />
+            <span>Auto-Niveles (Rango dinámico adaptativo)</span>
+          </label>
 
           <div class="control-group">
             <div class="control-label-row">
@@ -287,7 +303,7 @@
 
           <label class="checkbox-row" style="margin-top: 4px;">
             <input type="checkbox" id="check-variable-weight" checked />
-            <span>Grosor Dinámico (Bold/Heavy en cabello y sombras)</span>
+            <span>Grosor y Escala Dinámica (Bold en rasgos y sombras)</span>
           </label>
 
           <label class="checkbox-row" style="margin-top: 4px;">

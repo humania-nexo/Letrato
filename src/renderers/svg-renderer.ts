@@ -34,7 +34,7 @@ export class SvgRenderer {
         textElements += `<text transform="translate(${posX}, ${posY}) rotate(${deg})" font-size="${g.fontSize}px" fill="${solidColor}">${escapedChar}</text>\n`;
       }
     } else {
-      const fontSize = defaultFontSize;
+      const baseFontSize = cellHeight * 0.95;
       const halfCellW = cellWidth / 2;
       const halfCellH = cellHeight / 2;
 
@@ -47,6 +47,7 @@ export class SvgRenderer {
             continue;
           }
 
+          const fontSize = (baseFontSize * (cell.fontScale || 1.0)).toFixed(2);
           const posX = (cell.x + halfCellW).toFixed(2);
           const posY = (cell.y + halfCellH).toFixed(2);
           const solidColor = this.getSolidGrayscaleColor(cell.opacity, config.paperTheme);

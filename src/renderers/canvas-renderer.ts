@@ -134,9 +134,8 @@ export class CanvasRenderer {
     }
 
     // Configuración tipográfica para modos matriciales
-    const fontSize = grid.cellHeight * 0.95;
-    let currentWeight = '400';
-    targetCtx.font = `${currentWeight} ${fontSize}px ${config.fontFamily}, monospace`;
+    const baseFontSize = grid.cellHeight * 0.95;
+    let currentFontSpec = '';
     targetCtx.textAlign = 'center';
     targetCtx.textBaseline = 'middle';
 
@@ -164,11 +163,13 @@ export class CanvasRenderer {
         const posX = cell.x + halfCellW;
         const posY = cell.y + halfCellH;
 
-        // Modulación de grosor de fuente para sombras densas
+        // Modulación de grosor y escala de fuente para micro-rasgos y sombras densas
         const weight = String(cell.fontWeight || '400');
-        if (weight !== currentWeight) {
-          currentWeight = weight;
-          targetCtx.font = `${currentWeight} ${fontSize}px ${config.fontFamily}, monospace`;
+        const scaledSize = (baseFontSize * (cell.fontScale || 1.0)).toFixed(1);
+        const fontSpec = `${weight} ${scaledSize}px ${config.fontFamily}, monospace`;
+        if (fontSpec !== currentFontSpec) {
+          currentFontSpec = fontSpec;
+          targetCtx.font = fontSpec;
         }
 
         targetCtx.fillStyle = `rgba(${inkBase}, ${cell.opacity})`;

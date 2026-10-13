@@ -47,7 +47,7 @@ class LetratoApp {
       showReadableText: true,
       subjectName: PRESET_STORIES[0].subjectName,
       subjectDate: PRESET_STORIES[0].subjectDate,
-      columns: 110,
+      columns: 125,
       brightness: 0,
       contrast: 25,
       gamma: 1.0,
@@ -65,7 +65,9 @@ class LetratoApp {
 
       // Parámetros de alta fidelidad para retratos y dibujos
       autoLevels: true,
-      lineSensitivity: 60,
+      lineSensitivity: 65,
+      microDetail: 75,
+      subCellSnap: true,
       backgroundCutoff: 16,
       variableWeight: true,
       pauseTextOnWhitespace: true,
@@ -155,9 +157,15 @@ class LetratoApp {
       return `${val}%`;
     });
 
-    // Controles de fidelidad facial
+    // Controles de fidelidad facial y micro-rasgos
     this.bindRangeInput('input-line-sens', 'val-line-sens', (val) => {
       this.config.lineSensitivity = parseInt(val, 10);
+      this.recompute();
+      return `${val}%`;
+    });
+
+    this.bindRangeInput('input-micro-detail', 'val-micro-detail', (val) => {
+      this.config.microDetail = parseInt(val, 10);
       this.recompute();
       return `${val}%`;
     });
@@ -171,6 +179,12 @@ class LetratoApp {
     const autolevelsCheck = document.getElementById('check-autolevels') as HTMLInputElement;
     autolevelsCheck?.addEventListener('change', () => {
       this.config.autoLevels = autolevelsCheck.checked;
+      this.recompute();
+    });
+
+    const subcellSnapCheck = document.getElementById('check-subcell-snap') as HTMLInputElement;
+    subcellSnapCheck?.addEventListener('change', () => {
+      this.config.subCellSnap = subcellSnapCheck.checked;
       this.recompute();
     });
 
@@ -579,12 +593,13 @@ class LetratoApp {
         this.config.charAspectRatio
       );
 
-      // 2. Extraer Matriz de Luminancia y Bordes
-      const { luminanceMatrix, edgeMatrix } = this.imageProcessor.extractLuminanceMatrix(
-        this.currentImage,
-        grid,
-        this.config
-      );
+      // 2. Extraer Matriz de Luminancia, Bordes y Centroides Sub-Celda
+      const { luminanceMatrix, edgeMatrix, centroidXMatrix, centroidYMatrix } =
+        this.imageProcessor.extractLuminanceMatrix(
+          this.currentImage,
+          grid,
+          this.config
+        );
 
       // 3. Generar Celdas o Trazos según Modo
       const rawImageData = this.imageProcessor.getImageData(
@@ -598,7 +613,9 @@ class LetratoApp {
         luminanceMatrix,
         edgeMatrix,
         this.config,
-        rawImageData
+        rawImageData,
+        centroidXMatrix,
+        centroidYMatrix
       );
 
       const t1 = performance.now();

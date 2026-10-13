@@ -21,7 +21,9 @@ export class LetratoGenerator {
     luminanceMatrix: Float32Array,
     edgeMatrix: Float32Array,
     config: LetratoConfig,
-    rawImageData?: ImageData
+    rawImageData?: ImageData,
+    centroidXMatrix?: Float32Array,
+    centroidYMatrix?: Float32Array
   ): ProcessedMatrix {
     // Si el modo es Contorno / Caligrama y disponemos de la imagen en bruto
     if (config.mode === 'contorno' && rawImageData) {
@@ -68,22 +70,24 @@ export class LetratoGenerator {
         let opacity = 1.0;
         let overprintCount = 0;
         let fontWeight: string | number = '400';
+        let fontScale = 1.0;
 
         // Calcular oscuridad tonal efectiva
         let darkness = 1.0 - lum;
         if (edge > 0) {
-          darkness = Math.min(1.0, darkness + edge * 0.4);
+          darkness = Math.min(1.0, darkness + edge * 0.45);
         }
 
-        // Peso tipográfico dinámico según profundidad de sombra
+        // Peso y escala tipográfica dinámica según profundidad de sombra y micro-rasgo
         if (config.variableWeight) {
-          if (darkness > 0.65) {
-            fontWeight = '800'; // Bold / ExtraBlack para cabello, pupilas y trazos oscuros
+          if (darkness > 0.62) {
+            fontWeight = '700'; // Bold para cejas, armazones de lentes, pupilas y cabello
           } else if (darkness > 0.35) {
-            fontWeight = '600'; // SemiBold para rasgos y contornos
+            fontWeight = '600'; // SemiBold para rasgos medios
           } else {
-            fontWeight = '400'; // Regular para sombreados suaves
+            fontWeight = '400'; // Regular para sombreados suaves de piel
           }
+          fontScale = 0.86 + Math.min(0.24, darkness * 0.24);
         }
 
         switch (config.mode) {
@@ -116,7 +120,7 @@ export class LetratoGenerator {
 
               const relDark = (darkness - cutoff) / Math.max(0.01, 1.0 - cutoff);
               const minFloor = Math.max(0.12, config.minLegibility || 0.18);
-              opacity = minFloor + (1.0 - minFloor) * Math.pow(relDark, 0.75);
+              opacity = minFloor + (1.0 - minFloor) * Math.pow(relDark, 0.72);
               opacity = Math.max(0, Math.min(1.0, opacity));
             }
 
@@ -155,13 +159,23 @@ export class LetratoGenerator {
           }
         }
 
+        // Alineación Sub-Celda: desplaza ligeramente la letra hacia el centro exacto del trazo oscuro
+        // (elimina el efecto escalera en monturas de lentes, cejas y párpados)
+        let subOffsetX = 0;
+        let subOffsetY = 0;
+        if (config.subCellSnap && centroidXMatrix && centroidYMatrix && darkness >= cutoff) {
+          subOffsetX = centroidXMatrix[idx] * grid.cellWidth * 0.68;
+          subOffsetY = centroidYMatrix[idx] * grid.cellHeight * 0.68;
+        }
+
         rowCells.push({
           char,
-          x: c * grid.cellWidth,
-          y: r * grid.cellHeight,
+          x: c * grid.cellWidth + subOffsetX,
+          y: r * grid.cellHeight + subOffsetY,
           luminance: lum,
           opacity,
           fontWeight,
+          fontScale,
           overprintCount,
           edgeStrength: edge
         });
