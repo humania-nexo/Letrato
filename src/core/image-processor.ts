@@ -1,4 +1,5 @@
-import type { GridDimensions, LetratoConfig } from './types';
+import type { CropFormat, GridDimensions, LetratoConfig } from './types';
+import { getCropRegion } from './card-layout';
 
 export class ImageProcessor {
   private canvas: HTMLCanvasElement;
@@ -38,13 +39,23 @@ export class ImageProcessor {
   }
 
   /**
-   * Obtiene la estructura ImageData para procesamiento a resolución completa.
+   * Obtiene la estructura ImageData para procesamiento a resolución completa aplicando el encuadre seleccionado.
    */
-  public getImageData(image: HTMLImageElement, width: number, height: number): ImageData {
+  public getImageData(
+    image: HTMLImageElement,
+    width: number,
+    height: number,
+    cropFormat: CropFormat = 'original'
+  ): ImageData {
+    const crop = getCropRegion(
+      image.naturalWidth || width,
+      image.naturalHeight || height,
+      cropFormat
+    );
     this.canvas.width = width;
     this.canvas.height = height;
     this.ctx.clearRect(0, 0, width, height);
-    this.ctx.drawImage(image, 0, 0, width, height);
+    this.ctx.drawImage(image, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, width, height);
     return this.ctx.getImageData(0, 0, width, height);
   }
 
@@ -61,11 +72,17 @@ export class ImageProcessor {
     const width = grid.totalWidth;
     const height = grid.totalHeight;
 
+    const crop = getCropRegion(
+      image.naturalWidth || width,
+      image.naturalHeight || height,
+      config.cropFormat || 'original'
+    );
+
     this.canvas.width = width;
     this.canvas.height = height;
 
     this.ctx.clearRect(0, 0, width, height);
-    this.ctx.drawImage(image, 0, 0, width, height);
+    this.ctx.drawImage(image, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, width, height);
 
     const imageData = this.ctx.getImageData(0, 0, width, height);
     const data = imageData.data;

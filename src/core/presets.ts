@@ -12,6 +12,8 @@ export const PRESET_STORIES: PresetStory[] = [
   {
     id: 'flora-stacey',
     title: 'Homenaje a Flora Stacey (1898)',
+    subjectName: 'Flora Stacey',
+    subjectDate: '1898',
     author: 'El Manuscrito de Ceniza / SAPIENSIA Clan',
     summary: 'La pionera que en 1898 creó una mariposa con su máquina de escribir Bar-Lock.',
     text: `En mil ochocientos noventa y ocho, Flora Stacey tomó una máquina de escribir Bar-Lock y, pulsando tecla por tecla con paciencia de orfebre, compuso la silueta de una mariposa sobre el papel. Casi nadie se acordó de ella en las crónicas oficiales de la tecnología, pero su gesto humilde fundó una rebelión invisible: demostrar que una herramienta concebida para la fría contabilidad y los informes de oficina podía ser un instrumento de gracia humana y belleza poética. Adrián rescata su nombre en DinastIA™ y bautiza a esta técnica como Letrato en su honor. De lejos se ve una mirada; de cerca se lee la memoria viva de quien no merecía ser olvidada.`
@@ -19,6 +21,8 @@ export const PRESET_STORIES: PresetStory[] = [
   {
     id: 'artemisia-gentileschi',
     title: 'Artemisia Gentileschi — La Luz y el Temple',
+    subjectName: 'Artemisia Gentileschi',
+    subjectDate: '1593 – 1656',
     author: 'Crónica Histórica',
     summary: 'La gran maestra del claroscuro barroco que pintó el coraje y la dignidad de las mujeres.',
     text: `Artemisia Gentileschi nació en Roma en mil quinientos noventa y tres. Aprendió el rigor del pincel en el taller de su padre y desafió el juicio de una época que pretendía reducir a las mujeres al silencio y la sumisión. Con Judith y Holofernes transformó la herida en poder, el dolor en virtuosismo y las sombras en un testimonio eterno de resistencia. En cada trazo de óleo hay una afirmación feroz de soberanía artística. Mis obras hablarán por mí cuando las voces de mis acusadores se hayan disuelto en el olvido.`
@@ -26,6 +30,8 @@ export const PRESET_STORIES: PresetStory[] = [
   {
     id: 'hipatia-alejandria',
     title: 'Hipatia de Alejandría — La Geometría de las Estrellas',
+    subjectName: 'Hipatia de Alejandría',
+    subjectDate: '370 – 415 d. C.',
     author: 'Memoria Filosófica',
     summary: 'Matemática, astrónoma y filósofa neoplatónica.',
     text: `Conserva tu derecho a pensar, porque incluso pensar de manera errónea es mejor que no pensar en absoluto. En las salas del Museo y la Biblioteca de Alejandría, Hipatia enseñó la armonía de las secciones cónicas, la mecánica de los astrolabios y la belleza de la razón serena frente al fanatismo de las turbas. Defendió la búsqueda de la verdad hasta su último aliento, convirtiéndose en el faro intemporal del libre pensamiento y el conocimiento universal.`
@@ -33,6 +39,8 @@ export const PRESET_STORIES: PresetStory[] = [
   {
     id: 'don-samuel',
     title: 'El Letratito de Don Samuel',
+    subjectName: 'Don Samuel',
+    subjectDate: 'Memoria Viva',
     author: 'Canción Popular del Manuscrito',
     summary: 'El origen lírico de la palabra Letrato en la memoria de Don Samuel.',
     text: `En mi billetera cargo tu letratito, gastado de tanto mirarlo al caer la tarde. No es una foto de vidrio ni un papel pulido de estudio; son tus palabras dobladas en cuatro partes, las líneas que me escribiste antes de partir. Cada letra guarda la sombra de tu risa y cada espacio en blanco es la promesa de que volveremos a encontrarnos donde la memoria no se borra.`
@@ -40,6 +48,8 @@ export const PRESET_STORIES: PresetStory[] = [
   {
     id: 'frase-corta',
     title: 'Frase Corta (Test de Bucle Cíclico)',
+    subjectName: 'Archivo DinastIA(TM)',
+    subjectDate: '2042',
     author: 'David (Anigami Agadni)',
     summary: 'Demostración de replicación automática de un fragmento breve hasta esculpir la imagen.',
     text: `DE LEJOS UN ROSTRO, DE CERCA UNA HISTORIA. `
@@ -47,6 +57,8 @@ export const PRESET_STORIES: PresetStory[] = [
   {
     id: 'lorem-ipsum',
     title: 'Lorem Ipsum (Texto Aleatorio Tipográfico)',
+    subjectName: 'Muestra Tipográfica',
+    subjectDate: '12 OCT 2026',
     author: 'Estándar Tipográfico',
     summary: 'Texto de prueba para calibración gráfica pura y ritmo de manchas.',
     text: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`

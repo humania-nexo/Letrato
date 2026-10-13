@@ -8,8 +8,8 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#101216" />
-    <script type="module" crossorigin src="./assets/template-CIQdWvG_.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/template-prWUWgmb.css">
+    <script type="module" crossorigin src="./assets/template-rQMCiW7Q.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/template-BnU15o7E.css">
   </head>
   <body>
     <!-- CABECERA -->
@@ -44,15 +44,34 @@
     <main class="app-workspace">
       <!-- PANEL IZQUIERDO: ORIGEN Y TEXTO -->
       <aside class="sidebar left-sidebar">
-        <!-- 1. FOTOGRAFÍA -->
+        <!-- 1. FOTOGRAFÍA Y FORMATO -->
         <section class="panel-section">
-          <h2 class="section-title"><span>📷</span> 1. Fotografía</h2>
+          <h2 class="section-title"><span>📷</span> 1. Fotografía y Encuadre</h2>
           <div id="dropzone" class="upload-dropzone">
             <input type="file" id="file-input" accept="image/*" />
             <div class="dropzone-icon">📁</div>
             <p class="dropzone-text">Arrastra una foto o haz clic</p>
             <p class="dropzone-subtext">JPG, PNG, WebP o SVG</p>
           </div>
+
+          <div class="crop-format-group">
+            <span class="crop-group-label">Formato de Imagen (Cuadrada o Vertical):</span>
+            <div class="crop-btn-row">
+              <button type="button" class="crop-format-btn active" data-crop="vertical" title="Formato Retrato Vertical (3:4)">
+                <span>▯</span>
+                <span>Vertical (3:4)</span>
+              </button>
+              <button type="button" class="crop-format-btn" data-crop="square" title="Formato Cuadrado (1:1)">
+                <span>□</span>
+                <span>Cuadrada (1:1)</span>
+              </button>
+              <button type="button" class="crop-format-btn" data-crop="original" title="Proporción original de la foto">
+                <span>🖼️</span>
+                <span>Original</span>
+              </button>
+            </div>
+          </div>
+
           <button id="btn-sample-photo" class="sample-photo-btn">
             Cargar Retrato Canónico de Prueba
           </button>
@@ -84,10 +103,29 @@
           </div>
         </section>
 
-        <!-- 3. LA HISTORIA -->
+        <!-- 3. LA HISTORIA Y FICHA LEGIBLE -->
         <section class="panel-section" style="flex: 1;">
-          <h2 class="section-title"><span>✍️</span> 3. La Historia</h2>
+          <h2 class="section-title"><span>✍️</span> 3. La Historia y Ficha</h2>
           <div class="story-textarea-wrapper">
+            <label class="checkbox-row ficha-toggle-box" title="Añade u oculta al pie del Letrato la fecha y el recuadro con el texto legible">
+              <input type="checkbox" id="check-readable-card" checked />
+              <span style="font-weight: 600; color: var(--accent-gold);">Añadir Fecha y Campo de Texto Legible</span>
+            </label>
+
+            <div id="ficha-fields-row" class="ficha-fields-grid">
+              <div class="ficha-field">
+                <label for="input-subject-name">Nombre / Sujeto</label>
+                <input type="text" id="input-subject-name" class="text-input" value="Flora Stacey" placeholder="Ej. Flora Stacey" />
+              </div>
+              <div class="ficha-field">
+                <label for="input-subject-date">Fecha</label>
+                <div style="display: flex; gap: 4px;">
+                  <input type="text" id="input-subject-date" class="text-input" value="1898" placeholder="Ej. 1898" />
+                  <button type="button" id="btn-date-today" class="mini-btn" title="Insertar la fecha de hoy">Hoy</button>
+                </div>
+              </div>
+            </div>
+
             <select id="preset-select" class="preset-select">
               <option value="flora-stacey">Preset: Flora Stacey (1898)</option>
               <option value="artemisia-gentileschi">Preset: Artemisia Gentileschi</option>
@@ -122,10 +160,14 @@
         <div class="canvas-toolbar">
           <button id="btn-zoom-in" class="tool-btn" title="Acercar (Zoom In)"><span>🔍+</span></button>
           <button id="btn-zoom-out" class="tool-btn" title="Alejar (Zoom Out)"><span>🔍-</span></button>
-          <button id="btn-zoom-reset" class="tool-btn" title="Ajustar a pantalla"><span>1:1</span></button>
+          <button id="btn-zoom-reset" class="tool-btn" title="Ajustar a pantalla"><span>Ajustar</span></button>
           <button id="btn-toggle-magnifier" class="tool-btn" title="Lupa de lectura interactiva">
             <span>🔎</span>
             <span>Lupa de Lectura</span>
+          </button>
+          <button id="btn-toggle-ficha-toolbar" class="tool-btn active" title="Mostrar u ocultar la Ficha con Fecha y Texto Legible bajo el Letrato">
+            <span>📄</span>
+            <span id="label-toggle-ficha">Con Texto Legible</span>
           </button>
           
           <div class="theme-pill-group" title="Color de fondo de papel">

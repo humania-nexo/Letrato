@@ -1,4 +1,6 @@
 import type { PaperTheme, ProcessedMatrix } from '../core/types';
+import { computeCardLayout } from '../core/card-layout';
+import type { CardLayoutMetrics } from '../core/card-layout';
 
 export interface ViewportState {
   zoom: number;
@@ -29,7 +31,7 @@ export class CanvasRenderer {
   }
 
   /**
-   * Renderiza la matriz en el canvas principal aplicando el tema de papel y el estado del viewport.
+   * Renderiza la matriz en el canvas principal aplicando el tema de papel, encuadre y ficha legible.
    */
   public render(
     matrix: ProcessedMatrix,
@@ -39,6 +41,7 @@ export class CanvasRenderer {
   ): void {
     const { config } = matrix;
     const dpr = window.devicePixelRatio || 1;
+    const layout = computeCardLayout(matrix);
 
     // Ajustar resolución física del canvas para nitidez HiDPI
     const width = containerWidth;
@@ -52,15 +55,25 @@ export class CanvasRenderer {
     this.ctx.save();
     this.ctx.scale(dpr, dpr);
 
-    // Fondo según tema
-    this.drawBackground(width, height, config.paperTheme);
+    // Mesa de trabajo oscura alrededor de la hoja de papel para distinguir formato Cuadrado vs Vertical
+    this.ctx.fillStyle = '#0d0f14';
+    this.ctx.fillRect(0, 0, width, height);
 
     // Aplicar transformación de Pan & Zoom
     this.ctx.save();
     this.ctx.translate(viewport.panX, viewport.panY);
     this.ctx.scale(viewport.zoom, viewport.zoom);
 
-    // Dibujar el Letrato
+    // Sombra de la hoja de papel sobre la mesa
+    this.ctx.save();
+    this.ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+    this.ctx.shadowBlur = 24;
+    this.ctx.shadowOffsetX = 0;
+    this.ctx.shadowOffsetY = 8;
+    this.drawBackground(layout.totalDocWidth, layout.totalDocHeight, config.paperTheme, this.ctx);
+    this.ctx.restore();
+
+    // Dibujar el Letrato y, si está activa, la Ficha con Fecha y Texto Legible
     this.drawMatrixContent(this.ctx, matrix);
 
     this.ctx.restore();
@@ -74,7 +87,7 @@ export class CanvasRenderer {
   }
 
   /**
-   * Dibuja los caracteres en el contexto dado.
+   * Dibuja los caracteres del Letrato y la Ficha inferior (si showReadableText está activo) en el contexto dado.
    */
   public drawMatrixContent(
     targetCtx: CanvasRenderingContext2D,
@@ -83,6 +96,7 @@ export class CanvasRenderer {
   ): void {
     const { grid, cells, config } = matrix;
     const isDarkTheme = config.paperTheme === 'dark';
+    const layout = computeCardLayout(matrix);
 
     // Color base de tinta
     const inkBase = isDarkTheme ? '255, 255, 255' : '17, 17, 17';
@@ -111,6 +125,10 @@ export class CanvasRenderer {
         targetCtx.fillStyle = `rgba(${inkBase}, ${g.opacity})`;
         targetCtx.fillText(g.char, 0, 0);
         targetCtx.restore();
+      }
+
+      if (layout.enabled) {
+        this.drawReadableCard(targetCtx, matrix, layout, inkBase, isDarkTheme);
       }
       return;
     }
@@ -170,6 +188,79 @@ export class CanvasRenderer {
         }
       }
     }
+
+    // Dibujar la Ficha inferior con Fecha y Campo de Texto Legible si está habilitada
+    if (layout.enabled) {
+      this.drawReadableCard(targetCtx, matrix, layout, inkBase, isDarkTheme);
+    }
+  }
+
+  /**
+   * Dibuja la Ficha documental al pie del Letrato: Línea divisoria, Nombre, Fecha y Campo de Texto Legible.
+   */
+  private drawReadableCard(
+    targetCtx: CanvasRenderingContext2D,
+    matrix: ProcessedMatrix,
+    layout: CardLayoutMetrics,
+    inkBase: string,
+    isDarkTheme: boolean
+  ): void {
+    const { config } = matrix;
+    const W = layout.totalDocWidth;
+
+    targetCtx.save();
+
+    // 1. Línea divisoria superior
+    targetCtx.strokeStyle = `rgba(${inkBase}, 0.28)`;
+    targetCtx.lineWidth = 1;
+    targetCtx.beginPath();
+    targetCtx.moveTo(layout.paddingX, layout.dividerY);
+    targetCtx.lineTo(W - layout.paddingX, layout.dividerY);
+    targetCtx.stroke();
+
+    // 2. Cabecera: Nombre / Sujeto a la izquierda y Fecha a la derecha
+    targetCtx.textBaseline = 'alphabetic';
+    targetCtx.textAlign = 'left';
+    targetCtx.font = `700 ${layout.headerFontSize}px ${config.fontFamily}, monospace`;
+    targetCtx.fillStyle = `rgba(${inkBase}, 0.92)`;
+    targetCtx.fillText(layout.subjectLabel, layout.paddingX, layout.headerY);
+
+    if (layout.dateLabel) {
+      targetCtx.textAlign = 'right';
+      targetCtx.font = `400 ${Math.round(layout.headerFontSize * 0.86)}px ${config.fontFamily}, monospace`;
+      targetCtx.fillStyle = `rgba(${inkBase}, 0.75)`;
+      targetCtx.fillText(layout.dateLabel, W - layout.paddingX, layout.headerY);
+    }
+
+    // 3. Campo recuadrado para el texto legible
+    targetCtx.fillStyle = isDarkTheme ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.022)';
+    targetCtx.fillRect(layout.boxX, layout.boxY, layout.boxWidth, layout.boxHeight);
+
+    targetCtx.strokeStyle = `rgba(${inkBase}, 0.24)`;
+    targetCtx.lineWidth = 1;
+    targetCtx.strokeRect(layout.boxX, layout.boxY, layout.boxWidth, layout.boxHeight);
+
+    // 4. Párrafo del texto legible línea por línea
+    targetCtx.textAlign = 'left';
+    targetCtx.textBaseline = 'alphabetic';
+    targetCtx.font = `400 ${layout.bodyFontSize}px ${config.fontFamily}, monospace`;
+    targetCtx.fillStyle = `rgba(${inkBase}, 0.88)`;
+
+    for (let i = 0; i < layout.wrappedLines.length; i++) {
+      const lineY = layout.textStartY + i * layout.lineHeight;
+      targetCtx.fillText(layout.wrappedLines[i], layout.textStartX, lineY);
+    }
+
+    // 5. Pie de ficha (registro DinastIA)
+    const sigFontSize = Math.max(8, Math.round(layout.bodyFontSize * 0.72));
+    targetCtx.font = `400 ${sigFontSize}px ${config.fontFamily}, monospace`;
+    targetCtx.fillStyle = `rgba(${inkBase}, 0.5)`;
+    targetCtx.textAlign = 'left';
+    targetCtx.fillText('LETRATO · EL MANUSCRITO DE CENIZA', layout.paddingX, layout.footerSignatureY);
+    targetCtx.textAlign = 'right';
+    targetCtx.fillText('DINASTIA(TM) · SAPIENSIA CLAN', W - layout.paddingX, layout.footerSignatureY);
+
+    targetCtx.restore();
   }
 
   /**
@@ -178,6 +269,7 @@ export class CanvasRenderer {
   private drawMagnifier(matrix: ProcessedMatrix, viewport: ViewportState): void {
     const { magnifierX, magnifierY, magnifierRadius, magnifierZoom } = viewport;
     const ctx = this.ctx;
+    const layout = computeCardLayout(matrix);
 
     ctx.save();
 
@@ -196,7 +288,6 @@ export class CanvasRenderer {
     );
 
     // Calcular coordenadas centradas en el punto de inspección
-    // Posición en el canvas original
     const originX = (magnifierX - viewport.panX) / viewport.zoom;
     const originY = (magnifierY - viewport.panY) / viewport.zoom;
 
@@ -204,6 +295,9 @@ export class CanvasRenderer {
     ctx.translate(magnifierX, magnifierY);
     ctx.scale(magnifierZoom, magnifierZoom);
     ctx.translate(-originX, -originY);
+
+    // Fondo de la hoja dentro de la lupa
+    this.drawBackground(layout.totalDocWidth, layout.totalDocHeight, matrix.config.paperTheme, ctx);
 
     // Dibujar el contenido magnificado
     this.drawMatrixContent(ctx, matrix);
@@ -235,24 +329,28 @@ export class CanvasRenderer {
   }
 
   /**
-   * Dibuja el color y la textura del papel según el tema seleccionado.
+   * Dibuja el color del papel según el tema seleccionado en el contexto indicado.
    */
-  public drawBackground(width: number, height: number, theme: PaperTheme): void {
-    const ctx = this.ctx;
+  public drawBackground(
+    width: number,
+    height: number,
+    theme: PaperTheme,
+    targetCtx: CanvasRenderingContext2D = this.ctx
+  ): void {
     switch (theme) {
       case 'white':
-        ctx.fillStyle = '#ffffff';
+        targetCtx.fillStyle = '#ffffff';
         break;
       case 'sepia':
-        ctx.fillStyle = '#f4ede2';
+        targetCtx.fillStyle = '#f4ede2';
         break;
       case 'cream':
-        ctx.fillStyle = '#fdfbf7';
+        targetCtx.fillStyle = '#fdfbf7';
         break;
       case 'dark':
-        ctx.fillStyle = '#0f1115';
+        targetCtx.fillStyle = '#0f1115';
         break;
     }
-    ctx.fillRect(0, 0, width, height);
+    targetCtx.fillRect(0, 0, width, height);
   }
 }

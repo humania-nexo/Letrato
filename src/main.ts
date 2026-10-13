@@ -1,8 +1,9 @@
 import { calculateGridDimensions } from './core/grid-calculator';
+import { computeCardLayout, getCropRegion } from './core/card-layout';
 import { ImageProcessor } from './core/image-processor';
 import { LetratoGenerator } from './core/generator';
 import { ASCII_RAMPS, getSamplePortraitDataUrl, PRESET_STORIES } from './core/presets';
-import type { LetratoConfig, LetratoMode, PaperTheme, ProcessedMatrix } from './core/types';
+import type { CropFormat, LetratoConfig, LetratoMode, PaperTheme, ProcessedMatrix } from './core/types';
 import { CanvasRenderer } from './renderers/canvas-renderer';
 import type { ViewportState } from './renderers/canvas-renderer';
 import { SvgRenderer } from './renderers/svg-renderer';
@@ -42,6 +43,10 @@ class LetratoApp {
   constructor() {
     this.config = {
       mode: 'letrato',
+      cropFormat: 'vertical',
+      showReadableText: true,
+      subjectName: PRESET_STORIES[0].subjectName,
+      subjectDate: PRESET_STORIES[0].subjectDate,
       columns: 110,
       brightness: 0,
       contrast: 25,
@@ -88,6 +93,21 @@ class LetratoApp {
   }
 
   private initUI(): void {
+    // 0. Selector de formato de encuadre (Cuadrada 1:1 / Vertical 3:4 / Original)
+    const cropButtons = document.querySelectorAll<HTMLButtonElement>('.crop-format-btn');
+    cropButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const crop = btn.dataset.crop as CropFormat;
+        if (!crop) return;
+
+        cropButtons.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        this.config.cropFormat = crop;
+        this.recompute(true);
+      });
+    });
+
     // 1. Selector de modo
     const modeButtons = document.querySelectorAll<HTMLButtonElement>('.mode-btn');
     modeButtons.forEach((btn) => {
@@ -231,8 +251,67 @@ class LetratoApp {
       this.recompute();
     });
 
-    // Editor de historia
+    // Editor de historia y Ficha Legible
     const storyTextarea = document.getElementById('story-text') as HTMLTextAreaElement;
+    const subjectNameInput = document.getElementById('input-subject-name') as HTMLInputElement;
+    const subjectDateInput = document.getElementById('input-subject-date') as HTMLInputElement;
+    const dateTodayBtn = document.getElementById('btn-date-today') as HTMLButtonElement;
+    const readableCardCheck = document.getElementById('check-readable-card') as HTMLInputElement;
+    const fichaFieldsRow = document.getElementById('ficha-fields-row') as HTMLElement;
+    const toggleFichaToolbarBtn = document.getElementById('btn-toggle-ficha-toolbar') as HTMLButtonElement;
+    const labelToggleFicha = document.getElementById('label-toggle-ficha') as HTMLElement;
+
+    const syncReadableCardUI = (show: boolean) => {
+      this.config.showReadableText = show;
+      if (readableCardCheck) readableCardCheck.checked = show;
+      if (fichaFieldsRow) fichaFieldsRow.style.display = show ? 'grid' : 'none';
+      if (toggleFichaToolbarBtn) toggleFichaToolbarBtn.classList.toggle('active', show);
+      if (labelToggleFicha) labelToggleFicha.textContent = show ? 'Con Texto Legible' : 'Solo Letrato';
+      if (this.currentMatrix) {
+        this.currentMatrix.config = { ...this.config };
+        this.fitCanvasToContainer();
+        this.renderCanvas();
+      }
+    };
+
+    readableCardCheck?.addEventListener('change', () => {
+      syncReadableCardUI(readableCardCheck.checked);
+    });
+
+    toggleFichaToolbarBtn?.addEventListener('click', () => {
+      syncReadableCardUI(!this.config.showReadableText);
+    });
+
+    subjectNameInput?.addEventListener('input', () => {
+      this.config.subjectName = subjectNameInput.value;
+      if (this.currentMatrix) {
+        this.currentMatrix.config = { ...this.config };
+        this.renderCanvas();
+      }
+    });
+
+    subjectDateInput?.addEventListener('input', () => {
+      this.config.subjectDate = subjectDateInput.value;
+      if (this.currentMatrix) {
+        this.currentMatrix.config = { ...this.config };
+        this.renderCanvas();
+      }
+    });
+
+    dateTodayBtn?.addEventListener('click', () => {
+      const todayStr = new Date().toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      }).toUpperCase();
+      this.config.subjectDate = todayStr;
+      if (subjectDateInput) subjectDateInput.value = todayStr;
+      if (this.currentMatrix) {
+        this.currentMatrix.config = { ...this.config };
+        this.renderCanvas();
+      }
+    });
+
     storyTextarea.value = this.config.customText;
     this.updateCounters(this.config.customText);
 
@@ -248,7 +327,11 @@ class LetratoApp {
       const selected = PRESET_STORIES.find((p) => p.id === presetSelect.value);
       if (selected) {
         this.config.customText = selected.text;
+        this.config.subjectName = selected.subjectName;
+        this.config.subjectDate = selected.subjectDate;
         storyTextarea.value = selected.text;
+        if (subjectNameInput) subjectNameInput.value = selected.subjectName;
+        if (subjectDateInput) subjectDateInput.value = selected.subjectDate;
         this.updateCounters(selected.text);
         this.recompute();
       }
@@ -415,8 +498,7 @@ class LetratoApp {
   private async loadImageFromUrl(url: string): Promise<void> {
     try {
       this.currentImage = await this.imageProcessor.loadImage(url);
-      this.fitCanvasToContainer();
-      this.recompute();
+      this.recompute(true);
     } catch (e) {
       console.error('Error al cargar imagen de muestra:', e);
     }
@@ -425,8 +507,7 @@ class LetratoApp {
   private async loadImageFromFile(file: File): Promise<void> {
     try {
       this.currentImage = await this.imageProcessor.loadImage(file);
-      this.fitCanvasToContainer();
-      this.recompute();
+      this.recompute(true);
     } catch (e) {
       alert('No se pudo procesar la imagen seleccionada.');
     }
@@ -438,16 +519,30 @@ class LetratoApp {
     const containerW = this.viewportContainerEl.clientWidth || 600;
     const containerH = this.viewportContainerEl.clientHeight || 600;
 
-    const imgW = this.currentImage.naturalWidth || 600;
-    const imgH = this.currentImage.naturalHeight || 750;
+    let docW = 750;
+    let docH = 1000;
 
-    const scaleX = (containerW * 0.85) / imgW;
-    const scaleY = (containerH * 0.85) / imgH;
-    const fitScale = Math.min(scaleX, scaleY, 1.2);
+    if (this.currentMatrix) {
+      const layout = computeCardLayout(this.currentMatrix);
+      docW = layout.totalDocWidth;
+      docH = layout.totalDocHeight;
+    } else {
+      const crop = getCropRegion(
+        this.currentImage.naturalWidth || 600,
+        this.currentImage.naturalHeight || 750,
+        this.config.cropFormat
+      );
+      docW = crop.targetWidth;
+      docH = crop.targetHeight;
+    }
+
+    const scaleX = (containerW * 0.88) / docW;
+    const scaleY = (containerH * 0.88) / docH;
+    const fitScale = Math.min(scaleX, scaleY, 1.15);
 
     this.viewport.zoom = fitScale;
-    this.viewport.panX = (containerW - imgW * fitScale) / 2;
-    this.viewport.panY = (containerH - imgH * fitScale) / 2;
+    this.viewport.panX = (containerW - docW * fitScale) / 2;
+    this.viewport.panY = (containerH - docH * fitScale) / 2;
   }
 
   private showDinastiaIndicator(show: boolean): void {
@@ -457,7 +552,7 @@ class LetratoApp {
     }
   }
 
-  private recompute(): void {
+  private recompute(resetFit: boolean = false): void {
     if (!this.currentImage) return;
 
     this.showDinastiaIndicator(true);
@@ -470,10 +565,13 @@ class LetratoApp {
 
       const t0 = performance.now();
 
-      const imgW = this.currentImage.naturalWidth || 600;
-      const imgH = this.currentImage.naturalHeight || 750;
+      const rawW = this.currentImage.naturalWidth || 600;
+      const rawH = this.currentImage.naturalHeight || 750;
+      const crop = getCropRegion(rawW, rawH, this.config.cropFormat);
+      const imgW = crop.targetWidth;
+      const imgH = crop.targetHeight;
 
-      // 1. Calcular Cuadrícula
+      // 1. Calcular Cuadrícula según proporción seleccionada (Cuadrada 1:1 / Vertical 3:4 / Original)
       const grid = calculateGridDimensions(
         imgW,
         imgH,
@@ -489,7 +587,12 @@ class LetratoApp {
       );
 
       // 3. Generar Celdas o Trazos según Modo
-      const rawImageData = this.imageProcessor.getImageData(this.currentImage, imgW, imgH);
+      const rawImageData = this.imageProcessor.getImageData(
+        this.currentImage,
+        imgW,
+        imgH,
+        this.config.cropFormat
+      );
       this.currentMatrix = this.generator.generateMatrix(
         grid,
         luminanceMatrix,
@@ -499,6 +602,10 @@ class LetratoApp {
       );
 
       const t1 = performance.now();
+
+      if (resetFit) {
+        this.fitCanvasToContainer();
+      }
 
       // Actualizar Telemetría
       this.updateTelemetry(grid, Math.round(t1 - t0));
@@ -566,16 +673,23 @@ class LetratoApp {
     const aspectEl = document.getElementById('telemetry-aspect');
     const fpsEl = document.getElementById('telemetry-fps');
 
+    const formatName =
+      this.config.cropFormat === 'square'
+        ? '1:1 Cuadrada'
+        : this.config.cropFormat === 'vertical'
+        ? '3:4 Vertical'
+        : 'Original';
+
     if (this.config.mode === 'contorno' && this.currentMatrix?.contourGlyphs) {
       const pathsCount = this.currentMatrix.contourPaths?.length || 0;
       const glyphsCount = this.currentMatrix.contourGlyphs.length;
-      if (gridEl) gridEl.textContent = `${pathsCount} trazos de contorno`;
+      if (gridEl) gridEl.textContent = `${pathsCount} trazos (${formatName})`;
       if (cellsEl) cellsEl.textContent = `${glyphsCount.toLocaleString()} letras en curva`;
-      if (aspectEl) aspectEl.textContent = `Modo: Caligrama Vectorial`;
+      if (aspectEl) aspectEl.textContent = this.config.showReadableText ? 'Con Ficha Legible' : 'Solo Letrato';
     } else {
-      if (gridEl) gridEl.textContent = `${grid.columns} col × ${grid.rows} fil`;
+      if (gridEl) gridEl.textContent = `${grid.columns}×${grid.rows} (${formatName})`;
       if (cellsEl) cellsEl.textContent = `${(grid.columns * grid.rows).toLocaleString()} letras`;
-      if (aspectEl) aspectEl.textContent = `Relación: ${this.config.charAspectRatio.toFixed(2)}`;
+      if (aspectEl) aspectEl.textContent = this.config.showReadableText ? 'Con Ficha Legible' : 'Solo Letrato';
     }
     if (fpsEl) fpsEl.textContent = `Render: ${durationMs} ms`;
   }
@@ -594,7 +708,10 @@ class LetratoApp {
     const scaleSelect = document.getElementById('select-png-scale') as HTMLSelectElement;
     const scale = scaleSelect.value === '4x' ? 4 : scaleSelect.value === '2x' ? 2 : 1;
 
-    const { totalWidth, totalHeight } = this.currentMatrix.grid;
+    const layout = computeCardLayout(this.currentMatrix);
+    const totalWidth = layout.totalDocWidth;
+    const totalHeight = layout.totalDocHeight;
+
     const offCanvas = document.createElement('canvas');
     offCanvas.width = totalWidth * scale;
     offCanvas.height = totalHeight * scale;
@@ -603,7 +720,7 @@ class LetratoApp {
     if (!ctx) return;
 
     ctx.scale(scale, scale);
-    this.canvasRenderer.drawBackground(totalWidth, totalHeight, this.config.paperTheme);
+    this.canvasRenderer.drawBackground(totalWidth, totalHeight, this.config.paperTheme, ctx);
     this.canvasRenderer.drawMatrixContent(ctx, this.currentMatrix);
 
     const a = document.createElement('a');

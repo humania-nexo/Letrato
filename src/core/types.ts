@@ -4,6 +4,8 @@ export type PaperTheme = 'white' | 'sepia' | 'dark' | 'cream';
 
 export type ExportResolution = '1x' | '2x' | '4x';
 
+export type CropFormat = 'original' | 'square' | 'vertical';
+
 export interface Point2D {
   x: number;
   y: number;
@@ -28,6 +30,10 @@ export interface PlacedGlyph {
 
 export interface LetratoConfig {
   mode: LetratoMode;
+  cropFormat: CropFormat; // 'original' | 'square' (1:1) | 'vertical' (3:4)
+  showReadableText: boolean; // Si true, añade al pie la ficha con la fecha y el campo de texto legible
+  subjectName: string; // Nombre o título en la ficha (ej. Flora Stacey)
+  subjectDate: string; // Fecha en la ficha (ej. 1898)
   columns: number; // 40 - 260
   brightness: number; // -100 a 100 (0 por defecto)
   contrast: number; // -100 a 100 (20 por defecto)
@@ -92,6 +98,8 @@ export interface ProcessedMatrix {
 export interface PresetStory {
   id: string;
   title: string;
+  subjectName: string;
+  subjectDate: string;
   author: string;
   summary: string;
   text: string;

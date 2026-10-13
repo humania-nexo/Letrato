@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import type { ProcessedMatrix } from '../core/types';
+import { computeCardLayout } from '../core/card-layout';
 import { CanvasRenderer } from './canvas-renderer';
 
 export type PdfPageFormat = 'letter' | 'a4';
@@ -14,7 +15,9 @@ export class PdfRenderer {
     format: PdfPageFormat = 'letter',
     filename: string = 'letrato.pdf'
   ): Promise<void> {
-    const { totalWidth, totalHeight } = matrix.grid;
+    const layout = computeCardLayout(matrix);
+    const totalWidth = layout.totalDocWidth;
+    const totalHeight = layout.totalDocHeight;
     const isLandscape = totalWidth > totalHeight;
     const orientation: PdfOrientation = isLandscape ? 'landscape' : 'portrait';
 
@@ -30,7 +33,7 @@ export class PdfRenderer {
     // Márgenes editoriales de 15 mm
     const margin = 15;
     const maxAvailableWidth = pageWidth - margin * 2;
-    const maxAvailableHeight = pageHeight - margin * 2;
+    const maxAvailableHeight = pageHeight - margin * 2 - 6;
 
     // Calcular escala manteniendo proporción
     const aspect = totalWidth / totalHeight;
@@ -43,7 +46,7 @@ export class PdfRenderer {
     }
 
     const posX = (pageWidth - targetWidth) / 2;
-    const posY = (pageHeight - targetHeight) / 2;
+    const posY = (pageHeight - 6 - targetHeight) / 2;
 
     // Generar canvas temporal en ultra alta resolución (4x = ~300 DPI para imprenta)
     const scaleFactor = 4;
@@ -55,7 +58,7 @@ export class PdfRenderer {
     const ctx = offCanvas.getContext('2d');
     if (ctx) {
       ctx.scale(scaleFactor, scaleFactor);
-      renderer.drawBackground(totalWidth, totalHeight, matrix.config.paperTheme);
+      renderer.drawBackground(totalWidth, totalHeight, matrix.config.paperTheme, ctx);
       renderer.drawMatrixContent(ctx, matrix);
     }
 

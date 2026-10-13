@@ -1,4 +1,5 @@
 import type { PaperTheme, ProcessedMatrix } from '../core/types';
+import { computeCardLayout } from '../core/card-layout';
 
 export class SvgRenderer {
   /**
@@ -6,7 +7,8 @@ export class SvgRenderer {
    */
   public generateSvg(matrix: ProcessedMatrix): string {
     const { grid, cells, config } = matrix;
-    const { totalWidth, totalHeight, cellWidth, cellHeight, columns, rows } = grid;
+    const { cellWidth, cellHeight, columns, rows } = grid;
+    const layout = computeCardLayout(matrix);
 
     const bgFill =
       config.paperTheme === 'white'
@@ -33,8 +35,8 @@ export class SvgRenderer {
       }
     } else {
       const fontSize = defaultFontSize;
-      const halfCellW = (cellWidth / 2);
-      const halfCellH = (cellHeight / 2);
+      const halfCellW = cellWidth / 2;
+      const halfCellH = cellHeight / 2;
 
       for (let r = 0; r < rows; r++) {
         const row = cells[r];
@@ -71,9 +73,43 @@ export class SvgRenderer {
       }
     }
 
+    // FICHA DOCUMENTAL INFERIOR (FECHA + CAMPO DE TEXTO LEGIBLE)
+    let cardElements = '';
+    if (layout.enabled) {
+      const W = layout.totalDocWidth;
+      const ruleColor = this.getSolidGrayscaleColor(0.28, config.paperTheme);
+      const boxFillColor = this.getSolidGrayscaleColor(0.03, config.paperTheme);
+      const titleColor = this.getSolidGrayscaleColor(0.92, config.paperTheme);
+      const dateColor = this.getSolidGrayscaleColor(0.75, config.paperTheme);
+      const bodyColor = this.getSolidGrayscaleColor(0.88, config.paperTheme);
+      const sigColor = this.getSolidGrayscaleColor(0.5, config.paperTheme);
+
+      cardElements += `  <!-- Ficha Documental con Fecha y Campo de Texto Legible -->\n`;
+      cardElements += `  <g id="letrato-ficha">\n`;
+      cardElements += `    <line x1="${layout.paddingX}" y1="${layout.dividerY}" x2="${W - layout.paddingX}" y2="${layout.dividerY}" stroke="${ruleColor}" stroke-width="1"/>\n`;
+      cardElements += `    <text x="${layout.paddingX}" y="${layout.headerY}" font-size="${layout.headerFontSize}px" font-weight="700" text-anchor="start" dominant-baseline="alphabetic" fill="${titleColor}">${this.escapeXml(layout.subjectLabel)}</text>\n`;
+
+      if (layout.dateLabel) {
+        const dateFontSize = Math.round(layout.headerFontSize * 0.86);
+        cardElements += `    <text x="${W - layout.paddingX}" y="${layout.headerY}" font-size="${dateFontSize}px" font-weight="400" text-anchor="end" dominant-baseline="alphabetic" fill="${dateColor}">${this.escapeXml(layout.dateLabel)}</text>\n`;
+      }
+
+      cardElements += `    <rect x="${layout.boxX}" y="${layout.boxY}" width="${layout.boxWidth}" height="${layout.boxHeight}" fill="${boxFillColor}" stroke="${ruleColor}" stroke-width="1"/>\n`;
+
+      for (let i = 0; i < layout.wrappedLines.length; i++) {
+        const lineY = (layout.textStartY + i * layout.lineHeight).toFixed(2);
+        cardElements += `    <text x="${layout.textStartX}" y="${lineY}" font-size="${layout.bodyFontSize}px" font-weight="400" text-anchor="start" dominant-baseline="alphabetic" fill="${bodyColor}">${this.escapeXml(layout.wrappedLines[i])}</text>\n`;
+      }
+
+      const sigFontSize = Math.max(8, Math.round(layout.bodyFontSize * 0.72));
+      cardElements += `    <text x="${layout.paddingX}" y="${layout.footerSignatureY}" font-size="${sigFontSize}px" font-weight="400" text-anchor="start" dominant-baseline="alphabetic" fill="${sigColor}">LETRATO · EL MANUSCRITO DE CENIZA</text>\n`;
+      cardElements += `    <text x="${W - layout.paddingX}" y="${layout.footerSignatureY}" font-size="${sigFontSize}px" font-weight="400" text-anchor="end" dominant-baseline="alphabetic" fill="${sigColor}">DINASTIA(TM) · SAPIENSIA CLAN</text>\n`;
+      cardElements += `  </g>\n`;
+    }
+
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <!-- LETRATO · SAPIENSIA Clan · https://sapiensiaclan.com -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalWidth} ${totalHeight}" width="${totalWidth}" height="${totalHeight}">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${layout.totalDocWidth} ${layout.totalDocHeight}" width="${layout.totalDocWidth}" height="${layout.totalDocHeight}">
   <defs>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&amp;family=JetBrains+Mono:wght@400;700&amp;family=Roboto+Mono:wght@400;700&amp;display=swap');
@@ -91,7 +127,7 @@ export class SvgRenderer {
   <!-- Letrato: Retrato tipográfico en escala de grises real (DeviceGray) -->
   <g id="letrato-glyphs">
 ${textElements}  </g>
-</svg>`;
+${cardElements}</svg>`;
 
     return svg;
   }
