@@ -95,13 +95,22 @@ export function getCropRegion(
     }
   }
 
+  const maxDim = 850;
+  let targetWidth = w;
+  let targetHeight = h;
+  if (w > maxDim || h > maxDim) {
+    const scale = maxDim / Math.max(w, h);
+    targetWidth = Math.round(w * scale);
+    targetHeight = Math.round(h * scale);
+  }
+
   return {
     sx: 0,
     sy: 0,
     sw: w,
     sh: h,
-    targetWidth: w,
-    targetHeight: h
+    targetWidth,
+    targetHeight
   };
 }
 

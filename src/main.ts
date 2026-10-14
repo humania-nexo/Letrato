@@ -642,32 +642,74 @@ class LetratoApp {
 
   private async loadInitialData(): Promise<void> {
     const sampleUrl = getSamplePortraitDataUrl();
-    await this.loadImageFromUrl(sampleUrl);
+    await this.loadImageFromUrl(sampleUrl, 'Retrato de Flora Stacey');
   }
 
-  private async loadImageFromUrl(url: string): Promise<void> {
+  private updatePhotoPreview(img: HTMLImageElement, name?: string): void {
+    const previewBox = document.getElementById('photo-preview-box');
+    const previewImg = document.getElementById('photo-preview-img') as HTMLImageElement;
+    const previewMeta = document.getElementById('photo-preview-meta');
+
+    if (previewBox && previewImg && previewMeta) {
+      previewImg.src = img.src;
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      previewMeta.textContent = `${name || 'Foto'} · ${w}×${h} px`;
+      previewBox.style.display = 'flex';
+    }
+  }
+
+  private switchToCanvasTabOnMobile(): void {
+    const mobileWorkspace = document.getElementById('app-workspace');
+    if (mobileWorkspace && window.innerWidth <= 900) {
+      mobileWorkspace.dataset.tab = 'canvas';
+      const mobileNavBtns = document.querySelectorAll<HTMLButtonElement>('.mobile-nav-btn');
+      mobileNavBtns.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.tab === 'canvas');
+      });
+    }
+  }
+
+  private async loadImageFromUrl(url: string, name: string = 'Retrato de muestra'): Promise<void> {
     try {
+      this.showDinastiaIndicator(true);
       this.currentImage = await this.imageProcessor.loadImage(url);
+      this.updatePhotoPreview(this.currentImage, name);
+      this.switchToCanvasTabOnMobile();
       this.recompute(true);
     } catch (e) {
-      console.error('Error al cargar imagen de muestra:', e);
+      console.error('Error al cargar imagen:', e);
+      this.showDinastiaIndicator(false);
     }
   }
 
   private async loadImageFromFile(file: File): Promise<void> {
     try {
+      this.showDinastiaIndicator(true);
       this.currentImage = await this.imageProcessor.loadImage(file);
+      this.updatePhotoPreview(this.currentImage, file.name);
+      this.switchToCanvasTabOnMobile();
       this.recompute(true);
     } catch (e) {
+      console.error('Error al cargar archivo:', e);
       alert('No se pudo procesar la imagen seleccionada.');
+      this.showDinastiaIndicator(false);
     }
   }
 
   private fitCanvasToContainer(): void {
     if (!this.currentImage) return;
 
-    const containerW = this.viewportContainerEl.clientWidth || 600;
-    const containerH = this.viewportContainerEl.clientHeight || 600;
+    let containerW = this.viewportContainerEl.clientWidth;
+    let containerH = this.viewportContainerEl.clientHeight;
+
+    // Si el contenedor estaba oculto o midiendo 0, recurrir a dimensiones reales de pantalla
+    if (!containerW || containerW <= 0) {
+      containerW = window.innerWidth || 390;
+    }
+    if (!containerH || containerH <= 0) {
+      containerH = Math.round(window.innerHeight * 0.72) || 500;
+    }
 
     let docW = 750;
     let docH = 1000;
@@ -686,8 +728,8 @@ class LetratoApp {
       docH = crop.targetHeight;
     }
 
-    const scaleX = (containerW * 0.88) / docW;
-    const scaleY = (containerH * 0.88) / docH;
+    const scaleX = (containerW * 0.90) / docW;
+    const scaleY = (containerH * 0.90) / docH;
     const fitScale = Math.min(scaleX, scaleY, 1.15);
 
     this.viewport.zoom = fitScale;
@@ -760,8 +802,16 @@ class LetratoApp {
       // Actualizar Telemetría
       this.updateTelemetry(grid, Math.round(t1 - t0));
 
-      // Renderizar
+      // Renderizar primer pase
       this.renderCanvas();
+
+      // Segundo pase en requestAnimationFrame para garantizar sincronía visual
+      requestAnimationFrame(() => {
+        if (resetFit) {
+          this.fitCanvasToContainer();
+        }
+        this.renderCanvas();
+      });
 
       this.showDinastiaIndicator(false);
     }, 20);
@@ -770,8 +820,15 @@ class LetratoApp {
   private renderCanvas(): void {
     if (!this.currentMatrix) return;
 
-    const containerW = this.viewportContainerEl.clientWidth || 600;
-    const containerH = this.viewportContainerEl.clientHeight || 600;
+    let containerW = this.viewportContainerEl.clientWidth;
+    let containerH = this.viewportContainerEl.clientHeight;
+
+    if (!containerW || containerW <= 0) {
+      containerW = window.innerWidth || 390;
+    }
+    if (!containerH || containerH <= 0) {
+      containerH = Math.round(window.innerHeight * 0.72) || 500;
+    }
 
     this.canvasRenderer.render(
       this.currentMatrix,

@@ -22,7 +22,32 @@ export class ImageProcessor {
       const img = new Image();
       img.crossOrigin = 'anonymous';
 
-      img.onload = () => resolve(img);
+      img.onload = () => {
+        const maxDim = 1600;
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+
+        if (w > maxDim || h > maxDim) {
+          const scale = maxDim / Math.max(w, h);
+          const downW = Math.round(w * scale);
+          const downH = Math.round(h * scale);
+
+          const offCanvas = document.createElement('canvas');
+          offCanvas.width = downW;
+          offCanvas.height = downH;
+          const offCtx = offCanvas.getContext('2d');
+          if (offCtx) {
+            offCtx.drawImage(img, 0, 0, downW, downH);
+            const downImg = new Image();
+            downImg.onload = () => resolve(downImg);
+            downImg.onerror = () => resolve(img);
+            downImg.src = offCanvas.toDataURL('image/jpeg', 0.92);
+            return;
+          }
+        }
+        resolve(img);
+      };
+
       img.onerror = (err) => reject(new Error('Fallo al cargar la imagen: ' + err));
 
       if (typeof source === 'string') {

@@ -217,6 +217,49 @@ body {
   margin-top: 4px;
 }
 
+/* PHOTO PREVIEW BOX */
+.photo-preview-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--accent-gold-soft);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin-top: 8px;
+}
+
+.photo-preview-thumbnail {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-color);
+  background: #000;
+  flex-shrink: 0;
+}
+
+.photo-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.photo-preview-label {
+  font-size: 0.68rem;
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+
+.photo-preview-meta {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .sample-photo-btn {
   margin-top: 8px;
   background: var(--bg-surface-elevated);
