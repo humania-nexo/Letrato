@@ -8,8 +8,8 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#101216" />
-    <script type="module" crossorigin src="./assets/template-rQMCiW7Q.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/template-BnU15o7E.css">
+    <script type="module" crossorigin src="./assets/template-B08tssuL.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/template-NNdBummL.css">
   </head>
   <body>
     <!-- CABECERA -->
@@ -40,8 +40,28 @@
       </div>
     </header>
 
-    <!-- ÁREA DE TRABAJO PRINCIPAL (3 COLUMNAS) -->
-    <main class="app-workspace">
+    <!-- BARRA DE PESTAÑAS MÓVIL (VISIBLE SOLO EN MÓVILES Y PANTALLAS <= 900PX) -->
+    <nav class="mobile-nav-bar" id="mobile-nav-bar" aria-label="Navegación móvil">
+      <button type="button" class="mobile-nav-btn active" data-tab="canvas" title="Ver Lienzo">
+        <span class="mobile-nav-icon">🖼️</span>
+        <span class="mobile-nav-label">Lienzo</span>
+      </button>
+      <button type="button" class="mobile-nav-btn" data-tab="content" title="Foto y Texto">
+        <span class="mobile-nav-icon">✍️</span>
+        <span class="mobile-nav-label">Foto y Texto</span>
+      </button>
+      <button type="button" class="mobile-nav-btn" data-tab="settings" title="Ajustes de Tono y Resolución">
+        <span class="mobile-nav-icon">🎛️</span>
+        <span class="mobile-nav-label">Ajustes</span>
+      </button>
+      <button type="button" class="mobile-nav-btn" data-tab="export" title="Exportar y Descargar">
+        <span class="mobile-nav-icon">📥</span>
+        <span class="mobile-nav-label">Exportar</span>
+      </button>
+    </nav>
+
+    <!-- ÁREA DE TRABAJO PRINCIPAL (3 COLUMNAS EN DESKTOP / VISTAS ADAPTATIVAS EN MÓVIL) -->
+    <main class="app-workspace" id="app-workspace" data-tab="canvas">
       <!-- PANEL IZQUIERDO: ORIGEN Y TEXTO -->
       <aside class="sidebar left-sidebar">
         <!-- 1. FOTOGRAFÍA Y FORMATO -->
@@ -152,6 +172,11 @@
               </label>
             </div>
           </div>
+
+          <button type="button" class="mobile-jump-canvas-btn" data-jump="canvas">
+            <span>👁️</span>
+            <span>Ver Resultado en Lienzo</span>
+          </button>
         </section>
       </aside>
 
@@ -389,6 +414,107 @@
             </div>
             <input type="range" id="input-aspect" min="0.45" max="0.75" step="0.01" value="0.60" />
           </div>
+
+          <button type="button" class="mobile-jump-canvas-btn" data-jump="canvas">
+            <span>👁️</span>
+            <span>Ver Resultado en Lienzo</span>
+          </button>
+        </section>
+      </aside>
+
+      <!-- PANEL MÓVIL DE EXPORTACIÓN (TAB EXPORTAR) -->
+      <aside class="sidebar export-mobile-sidebar" id="panel-export">
+        <section class="panel-section">
+          <h2 class="section-title"><span>📥</span> Exportar y Guardar</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+            Descarga tu Letrato en alta resolución o cópialo para compartirlo en cualquier plataforma.
+          </p>
+
+          <div class="mobile-export-grid">
+            <div class="mobile-export-card">
+              <div class="mobile-export-card-header">
+                <span class="mobile-export-icon">🖼️</span>
+                <div>
+                  <h4 style="color: var(--text-main); font-size: 0.95rem;">Imagen PNG</h4>
+                  <p style="font-size: 0.74rem; color: var(--text-dim);">Fidelidad raster para redes sociales y pantallas</p>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <select id="select-png-scale-mobile" class="select-input" style="flex: 1;">
+                  <option value="1x">1x (Normal)</option>
+                  <option value="2x" selected>2x (Póster)</option>
+                  <option value="4x">4x (Imprenta 300 DPI)</option>
+                </select>
+                <button type="button" id="btn-export-png-mobile" class="btn-primary" style="flex: 1.5; justify-content: center;">
+                  Descargar PNG
+                </button>
+              </div>
+            </div>
+
+            <div class="mobile-export-card">
+              <div class="mobile-export-card-header">
+                <span class="mobile-export-icon">📄</span>
+                <div>
+                  <h4 style="color: var(--text-main); font-size: 0.95rem;">Documento PDF</h4>
+                  <p style="font-size: 0.74rem; color: var(--text-dim);">Listo para imprimir en carta / A4 con cita editorial</p>
+                </div>
+              </div>
+              <button type="button" id="btn-export-pdf-mobile" class="btn-secondary" style="width: 100%; margin-top: 10px; justify-content: center;">
+                Descargar PDF de Imprenta
+              </button>
+            </div>
+
+            <div class="mobile-export-card">
+              <div class="mobile-export-card-header">
+                <span class="mobile-export-icon">⚡</span>
+                <div>
+                  <h4 style="color: var(--accent-gold); font-size: 0.95rem;">SVG Vectorial Puro</h4>
+                  <p style="font-size: 0.74rem; color: var(--text-dim);">Escala infinita en DeviceGray para imprenta láser</p>
+                </div>
+              </div>
+              <button type="button" id="btn-export-svg-mobile" class="btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">
+                Descargar SVG Vectorial
+              </button>
+            </div>
+
+            <div class="mobile-export-card">
+              <div class="mobile-export-card-header">
+                <span class="mobile-export-icon">📋</span>
+                <div>
+                  <h4 style="color: var(--text-main); font-size: 0.95rem;">Copiar Texto</h4>
+                  <p style="font-size: 0.74rem; color: var(--text-dim);">Copia el texto del letrato en renglones exactos</p>
+                </div>
+              </div>
+              <button type="button" id="btn-copy-text-mobile" class="btn-secondary" style="width: 100%; margin-top: 10px; justify-content: center;">
+                Copiar al Portapapeles
+              </button>
+            </div>
+
+            <div class="mobile-export-card">
+              <div class="mobile-export-card-header">
+                <span class="mobile-export-icon">💾</span>
+                <div>
+                  <h4 style="color: var(--text-main); font-size: 0.95rem;">Guardar en este Teléfono</h4>
+                  <p style="font-size: 0.74rem; color: var(--text-dim);">Guarda tu letrato en la memoria local para abrirlo después</p>
+                </div>
+              </div>
+              <button type="button" id="btn-save-project-mobile" class="btn-secondary" style="width: 100%; margin-top: 10px; justify-content: center;">
+                Guardar Proyecto
+              </button>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; text-align: center;">
+            <a href="https://sapiensiaclan.com" target="_blank" rel="noopener noreferrer" class="clan-header-link" style="display: inline-flex; justify-content: center; width: 100%; padding: 10px;">
+              <span class="clan-dot"></span>
+              <span>Visitar SAPIENSIA Clan (sapiensiaclan.com) ↗</span>
+            </a>
+          </div>
+
+          <button type="button" class="mobile-jump-canvas-btn" data-jump="canvas">
+            <span>👁️</span>
+            <span>Volver al Lienzo</span>
+          </button>
         </section>
       </aside>
     </main>

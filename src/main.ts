@@ -395,13 +395,62 @@ class LetratoApp {
       this.loadImageFromUrl(getSamplePortraitDataUrl());
     });
 
-    // Barra de exportación
+    // Barra de exportación (Escritorio)
     document.getElementById('btn-export-svg')?.addEventListener('click', () => this.exportSvg());
     document.getElementById('btn-export-png')?.addEventListener('click', () => this.exportPng());
     document.getElementById('btn-export-pdf')?.addEventListener('click', () => this.exportPdf());
     document.getElementById('btn-copy-text')?.addEventListener('click', () => this.copyText());
     document.getElementById('btn-save-project')?.addEventListener('click', () => this.saveCurrentProject());
     document.getElementById('btn-print-test')?.addEventListener('click', () => window.print());
+
+    // Pestañas y controles de navegación móvil (Smartphone y Tablet)
+    const mobileWorkspace = document.getElementById('app-workspace');
+    const mobileNavBtns = document.querySelectorAll<HTMLButtonElement>('.mobile-nav-btn');
+
+    const switchMobileTab = (tab: string) => {
+      if (mobileWorkspace) {
+        mobileWorkspace.dataset.tab = tab;
+      }
+      mobileNavBtns.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+
+      if (tab === 'canvas') {
+        // Al volver al lienzo en móvil, reajustar dimensiones inmediatamente
+        requestAnimationFrame(() => {
+          this.fitCanvasToContainer();
+          this.renderCanvas();
+        });
+      }
+    };
+
+    mobileNavBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab || 'canvas';
+        switchMobileTab(tab);
+      });
+    });
+
+    // Botones rápidos de salto al lienzo ("Ver en Lienzo")
+    document.querySelectorAll<HTMLButtonElement>('.mobile-jump-canvas-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        switchMobileTab('canvas');
+      });
+    });
+
+    // Botones de exportación en panel móvil
+    document.getElementById('btn-export-png-mobile')?.addEventListener('click', () => {
+      const mobileScale = (document.getElementById('select-png-scale-mobile') as HTMLSelectElement)?.value;
+      const desktopSelect = document.getElementById('select-png-scale') as HTMLSelectElement;
+      if (desktopSelect && mobileScale) {
+        desktopSelect.value = mobileScale;
+      }
+      this.exportPng();
+    });
+    document.getElementById('btn-export-pdf-mobile')?.addEventListener('click', () => this.exportPdf());
+    document.getElementById('btn-export-svg-mobile')?.addEventListener('click', () => this.exportSvg());
+    document.getElementById('btn-copy-text-mobile')?.addEventListener('click', () => this.copyText());
+    document.getElementById('btn-save-project-mobile')?.addEventListener('click', () => this.saveCurrentProject());
 
     // Modales
     this.initModals();
@@ -460,6 +509,107 @@ class LetratoApp {
         this.isPanning = false;
         this.viewportContainerEl.classList.remove('panning');
       }
+    });
+
+    // Touch Gestures (Pan & Pinch-to-Zoom para Smartphone y Tablet)
+    let initialPinchDistance = 0;
+    let initialPinchZoom = 1.0;
+    let pinchMidpointX = 0;
+    let pinchMidpointY = 0;
+    let isTouchPanning = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    this.viewportContainerEl.addEventListener(
+      'touchstart',
+      (e: TouchEvent) => {
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
+          if (this.viewport.showMagnifier) {
+            const rect = this.canvasEl.getBoundingClientRect();
+            this.viewport.magnifierX = touch.clientX - rect.left;
+            this.viewport.magnifierY = touch.clientY - rect.top;
+            this.renderCanvas();
+            return;
+          }
+          isTouchPanning = true;
+          touchStartX = touch.clientX - this.viewport.panX;
+          touchStartY = touch.clientY - this.viewport.panY;
+        } else if (e.touches.length === 2) {
+          isTouchPanning = false;
+          const t1 = e.touches[0];
+          const t2 = e.touches[1];
+          initialPinchDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+          initialPinchZoom = this.viewport.zoom;
+
+          const rect = this.viewportContainerEl.getBoundingClientRect();
+          pinchMidpointX = (t1.clientX + t2.clientX) / 2 - rect.left;
+          pinchMidpointY = (t1.clientY + t2.clientY) / 2 - rect.top;
+        }
+      },
+      { passive: false }
+    );
+
+    this.viewportContainerEl.addEventListener(
+      'touchmove',
+      (e: TouchEvent) => {
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
+          if (this.viewport.showMagnifier) {
+            e.preventDefault();
+            const rect = this.canvasEl.getBoundingClientRect();
+            this.viewport.magnifierX = touch.clientX - rect.left;
+            this.viewport.magnifierY = touch.clientY - rect.top;
+            this.renderCanvas();
+          } else if (isTouchPanning) {
+            e.preventDefault();
+            this.viewport.panX = touch.clientX - touchStartX;
+            this.viewport.panY = touch.clientY - touchStartY;
+            this.renderCanvas();
+          }
+        } else if (e.touches.length === 2 && initialPinchDistance > 0) {
+          e.preventDefault();
+          const t1 = e.touches[0];
+          const t2 = e.touches[1];
+          const currentDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+          const factor = currentDist / initialPinchDistance;
+          const newZoom = Math.max(0.2, Math.min(8.0, initialPinchZoom * factor));
+
+          this.viewport.panX = pinchMidpointX - (pinchMidpointX - this.viewport.panX) * (newZoom / this.viewport.zoom);
+          this.viewport.panY = pinchMidpointY - (pinchMidpointY - this.viewport.panY) * (newZoom / this.viewport.zoom);
+          this.viewport.zoom = newZoom;
+          this.renderCanvas();
+        }
+      },
+      { passive: false }
+    );
+
+    this.viewportContainerEl.addEventListener('touchend', (e: TouchEvent) => {
+      if (e.touches.length === 0) {
+        isTouchPanning = false;
+        initialPinchDistance = 0;
+      } else if (e.touches.length === 1) {
+        initialPinchDistance = 0;
+        isTouchPanning = true;
+        const touch = e.touches[0];
+        touchStartX = touch.clientX - this.viewport.panX;
+        touchStartY = touch.clientY - this.viewport.panY;
+      }
+    });
+
+    this.viewportContainerEl.addEventListener('touchcancel', () => {
+      isTouchPanning = false;
+      initialPinchDistance = 0;
+    });
+
+    // Resize y cambio de orientación de smartphone
+    let resizeTimer: any = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        this.fitCanvasToContainer();
+        this.renderCanvas();
+      }, 150);
     });
 
     // Wheel Zoom

@@ -913,13 +913,344 @@ canvas#main-canvas {
   to { opacity: 1; transform: scale(1.2); }
 }
 
-/* RESPONSIVE */
-@media (max-width: 1024px) {
+/* COMPONENTES MÓVILES (OCULTOS EN ESCRITORIO) */
+.mobile-nav-bar {
+  display: none;
+}
+
+.mobile-jump-canvas-btn {
+  display: none;
+}
+
+.export-mobile-sidebar {
+  display: none;
+}
+
+.mobile-export-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.mobile-export-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-export-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-export-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+/* RESPONSIVE: ESCRITORIOS MEDIANOS (901px a 1150px) */
+@media (max-width: 1150px) and (min-width: 901px) {
   .app-workspace {
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 290px 1fr 290px;
   }
-  .sidebar.right-sidebar {
+  .brand-tagline {
     display: none;
+  }
+}
+
+/* RESPONSIVE: SMARTPHONES Y TABLETS (<= 900px) */
+@media (max-width: 900px) {
+  /* Cabecera compacta */
+  .app-header {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .brand-wrapper {
+    gap: 8px;
+  }
+
+  .brand-title {
+    font-size: 1.25rem;
+    letter-spacing: 1.5px;
+  }
+
+  .brand-tagline {
+    display: none;
+  }
+
+  .privacy-badge {
+    display: none;
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .clan-header-link {
+    padding: 4px 8px;
+    font-size: 0.68rem;
+  }
+
+  .header-btn {
+    padding: 5px 8px;
+    font-size: 0.72rem;
+  }
+
+  /* Barra de Pestañas Móvil */
+  .mobile-nav-bar {
+    display: flex;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    padding: 4px 6px;
+    gap: 6px;
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  }
+
+  .mobile-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 2px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 48px;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-nav-btn .mobile-nav-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .mobile-nav-btn.active {
+    color: var(--accent-gold);
+    background: var(--accent-gold-soft);
+    border-color: rgba(197, 160, 89, 0.4);
+    font-weight: 600;
+  }
+
+  /* Espacio de trabajo móvil */
+  .app-workspace {
+    display: block;
+    height: calc(100vh - 105px);
+    height: calc(100dvh - 105px);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Ocultar barra inferior tradicional en móvil */
+  .export-bar {
+    display: none !important;
+  }
+
+  /* Visibilidad de vistas por pestaña */
+  .app-workspace[data-tab="canvas"] .left-sidebar,
+  .app-workspace[data-tab="canvas"] .right-sidebar,
+  .app-workspace[data-tab="canvas"] .export-mobile-sidebar {
+    display: none !important;
+  }
+
+  .app-workspace[data-tab="canvas"] .canvas-workspace {
+    display: flex !important;
+    width: 100%;
+    height: 100%;
+  }
+
+  .app-workspace[data-tab="content"] .canvas-workspace,
+  .app-workspace[data-tab="content"] .right-sidebar,
+  .app-workspace[data-tab="content"] .export-mobile-sidebar {
+    display: none !important;
+  }
+
+  .app-workspace[data-tab="content"] .left-sidebar {
+    display: flex !important;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border-right: none;
+    padding: 14px 14px 40px 14px;
+  }
+
+  .app-workspace[data-tab="settings"] .canvas-workspace,
+  .app-workspace[data-tab="settings"] .left-sidebar,
+  .app-workspace[data-tab="settings"] .export-mobile-sidebar {
+    display: none !important;
+  }
+
+  .app-workspace[data-tab="settings"] .right-sidebar {
+    display: flex !important;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border-right: none;
+    border-left: none;
+    padding: 14px 14px 40px 14px;
+  }
+
+  .app-workspace[data-tab="export"] .canvas-workspace,
+  .app-workspace[data-tab="export"] .left-sidebar,
+  .app-workspace[data-tab="export"] .right-sidebar {
+    display: none !important;
+  }
+
+  .app-workspace[data-tab="export"] .export-mobile-sidebar {
+    display: flex !important;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border-right: none;
+    border-left: none;
+    padding: 14px 14px 40px 14px;
+  }
+
+  /* Botón de salto al lienzo */
+  .mobile-jump-canvas-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, rgba(197, 160, 89, 0.25), rgba(197, 160, 89, 0.1));
+    border: 1px solid var(--accent-gold);
+    border-radius: var(--radius-sm);
+    color: var(--accent-gold);
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    margin-top: 14px;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Barra de herramientas sobre el lienzo en móvil */
+  .canvas-toolbar {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    transform: none;
+    width: auto;
+    max-width: calc(100vw - 16px);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 5px 8px;
+    gap: 4px;
+    scrollbar-width: none;
+  }
+
+  .canvas-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tool-btn {
+    padding: 5px 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  /* Telemetría compacta */
+  .telemetry-bar {
+    padding: 4px 10px;
+    font-size: 0.62rem;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .telemetry-group {
+    gap: 8px;
+  }
+
+  /* Ocultar frase larga de lore en móvil para maximizar área de visualización */
+  .lore-footer-bar {
+    display: none;
+  }
+
+  /* Sliders táctiles cómodos */
+  input[type="range"] {
+    height: 8px;
+    margin: 8px 0;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+
+  .checkbox-row {
+    padding: 8px 0;
+    font-size: 0.82rem;
+  }
+
+  .checkbox-row input {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Modales en móvil */
+  .modal-box {
+    width: 95vw;
+    max-height: 88vh;
+    padding: 16px;
+    border-radius: var(--radius-md);
+  }
+
+  /* Dropzone táctil */
+  .upload-dropzone {
+    padding: 24px 12px;
+  }
+
+  /* Botones de modo táctiles */
+  .mode-btn {
+    padding: 10px 12px;
+  }
+}
+
+/* RESPONSIVE: PANTALLAS EXTRA PEQUEÑAS (<= 480px) */
+@media (max-width: 480px) {
+  .header-actions .clan-header-link span:nth-child(2) {
+    display: none;
+  }
+
+  .canvas-toolbar #btn-toggle-magnifier span:nth-child(2),
+  .canvas-toolbar #label-toggle-ficha {
+    display: none;
+  }
+
+  .crop-btn-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .crop-format-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ficha-fields-grid {
+    grid-template-columns: 1fr;
   }
 }
 
